@@ -4,8 +4,9 @@
   "description": "Clinic System for managing clinic appointments and patients",
   "main": "src/server.js",
   "scripts": {
-    "start": "cross-env NODE_ENV=development nodemon src/server.js",
-    "start:prod": "cross-env NODE_ENV=production node src/server.js",
+    "start": "node src/server.js",
+    "dev": "cross-env NODE_ENV=development nodemon src/server.js",
+    "start:prod": "cross-env NODE_ENV=production nodemon src/server.js",
     "build": "node build.mjs",
     "build:dev": "node build.mjs --dev"
   },
