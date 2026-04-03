@@ -1,4 +1,8 @@
-process.loadEnvFile();
+import dotenv from 'dotenv';
+
+if (process.env.NODE_ENV !== 'production') {
+  dotenv.config();
+}
 
 const requiredEnvVars = [
   'NODE_ENV',
