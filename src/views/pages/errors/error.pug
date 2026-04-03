@@ -1,0 +1,43 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="utf-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1")
+    link(rel="icon", type="image/jpeg", href="/images/icon.jpeg")
+    title= `${statusCode || 'Error'} · Physio Egypt`
+    link(rel="preconnect", href="https://fonts.googleapis.com")
+    link(rel="preconnect", href="https://fonts.gstatic.com", crossorigin)
+    link(href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@700&display=swap", rel="stylesheet")
+    link(rel="stylesheet", href="/css/base.css")
+    link(rel="stylesheet", href="/css/components.css")
+    link(rel="stylesheet", href="/css/pages/errors.css")
+    script(src="/js/vendor/lucide.min.js")
+  body
+    .error-shell
+      .error-card.reveal
+        .error-icon-wrap
+          .error-blob(class=statusCode === 403 ? 'blob-amber' : 'blob-red')
+          .error-icon(class=statusCode === 403 ? 'icon-amber' : 'icon-red')
+            if statusCode === 403
+              i(data-lucide="shield-off")
+            else if statusCode === 401
+              i(data-lucide="lock")
+            else if statusCode === 429
+              i(data-lucide="clock")
+            else
+              i(data-lucide="alert-triangle")
+        .error-code(class=statusCode === 403 ? 'code-amber' : 'code-red')= statusCode || 'Error'
+        h1.error-title= title || 'حدث خطأ'
+        p.error-msg= message || 'حدث خطأ غير متوقع.'
+        .error-actions
+          a.btn.btn-primary(href="/dashboard")
+            i(data-lucide="layout-dashboard")
+            | الذهاب إلى لوحة التحكم
+          a.btn.btn-ghost(href="javascript:history.back()")
+            i(data-lucide="arrow-left")
+            | الرجوع
+    script.
+      window.lucide?.createIcons?.({ attrs: { 'stroke-width': 1.8 } });
+    script(type="module").
+      import { initReveal } from '/js/components/reveal.js';
+      initReveal();

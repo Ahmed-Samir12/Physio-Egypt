@@ -1,0 +1,16 @@
+extends baseEmail
+
+block content
+    .email-container
+        h2.email-header Welcome aboard, #{userName}! 🎉
+
+        p.email-content Your email has been verified and your account is now active!
+
+        .info-box
+            h3 Getting Started:
+            ul
+                li Please login to complete your profile
+
+
+        .button-container
+            a.dashboard-button(href=url) فتح حسابي

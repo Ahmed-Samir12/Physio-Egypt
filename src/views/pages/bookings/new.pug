@@ -1,0 +1,160 @@
+extends ../../layouts/main.pug
+
+block vars
+  - var pageTitle = 'New Booking'
+  - var pageCrumb = 'Create appointment'
+
+block pageStyles
+  link(rel="stylesheet", href="/css/pages/bookings.css")
+
+block content
+  form#bookingForm.form-grid
+
+    //- ── Left: Patient info ────────────────────────────────
+    .form-col
+      .card.card-pad.card-glass.reveal
+        h3 بيانات المريض
+        .secondary(style="margin-top:.25rem;margin-bottom:1rem") ادخل رقم الهاتف أولاً — سيتم ملء البيانات تلقائياً إذا كان المريض موجوداً.
+
+        .field
+          label.label(for="phone") رقم الهاتف
+          .input-group
+            span.input-prefix +20
+            input#phone.input.with-prefix(type="tel", inputmode="tel", placeholder="1XXXXXXXXX", data-phone, dir="ltr")
+          .patient-found-badge.hidden(data-found)
+            i(data-lucide="check-circle")
+            | تم العثور على المريض ✓
+
+        .split-row
+          .field
+            label.label(for="name") الاسم الكامل
+            input#name.input(type="text", placeholder="اسم المريض", data-name)
+          .field
+            label.label(for="age") العمر
+            input#age.input(type="number", min="0", placeholder="السن", data-age)
+
+        .field
+          label.label(for="patient-id") رقم المريض
+          input#patient-id.input(type="text", placeholder="PT-00001", disabled, data-patient-id)
+
+        .field
+          label.label الجنس
+          .pill-group(data-gender)
+            label.pill
+              input(type="radio", name="gender", value="male")
+              span ذكر
+            label.pill
+              input(type="radio", name="gender", value="female")
+              span أنثى
+
+        .field
+          label.label(for="address") العنوان
+          input#address.input(type="text", placeholder="عنوان المريض", data-address)
+
+        .field
+          label.label(for="nationality") الجنسية
+            span.field-optional (اختياري)
+          input#nationality.input(type="text", placeholder="مثال: مصري — سعودي — سوداني", list="nationalities", data-nationality)
+          datalist#nationalities
+            option(value="مصري")
+            option(value="سعودي")
+            option(value="سوداني")
+            option(value="ليبي")
+            option(value="إماراتي")
+            option(value="كويتي")
+            option(value="قطري")
+            option(value="يمني")
+            option(value="أردني")
+            option(value="فلسطيني")
+            option(value="لبناني")
+            option(value="سوري")
+            option(value="عراقي")
+            option(value="مغربي")
+            option(value="تونسي")
+            option(value="جزائري")
+            option(value="Egyptian")
+            option(value="Saudi")
+            option(value="Sudanese")
+            option(value="Other")
+
+        //- Complaint field
+        .field
+          label.label(for="complaint") الشكوى
+          input#complaint.input(type="text", placeholder="ماذا يشكو المريض؟", data-complaint)
+          .field-hint سيتم تحديث سجل المريض بهذه الشكوى
+
+        //- WhatsApp number field (optional)
+        .field
+          label.label(for="whatsappNumber")
+            | رقم الواتساب
+            span.field-optional (اختياري)
+          .input-group
+            span.input-prefix +20
+            input#whatsappNumber.input.with-prefix(type="tel", inputmode="tel", placeholder="1XXXXXXXXX", data-whatsapp-number, dir="ltr")
+          .field-hint اتركه فارغاً إذا كان نفس رقم الهاتف
+
+        //- Companion field (optional)
+        .field
+          label.label(for="companion")
+            | المرافق
+            span.field-optional (اختياري)
+          input#companion.input(type="text", placeholder="اسم المرافق إن وُجد", data-companion)
+          .field-hint يمكنك ترك هذا الحقل فارغاً إذا لم يكن هناك مرافق
+
+        .field
+          label.label(for="pnotes") ملاحظات عن المريض
+          textarea#pnotes.textarea(placeholder="ملاحظات…", data-pnotes, rows="2")
+
+    //- ── Right: Appointment info ───────────────────────────
+    .form-col
+      .card.card-pad.card-glass.reveal(style="--d:60ms")
+        h3 بيانات الموعد
+
+        .split-row(style="margin-top:1rem")
+          .field
+            label.label(for="date") التاريخ
+            input#date.input(type="date", required, data-date, dir="ltr")
+          .field
+            label.label(for="time") الوقت
+            input#time.input(type="time", required, data-time, dir="ltr")
+
+        .field
+          label.label(for="service") نوع الخدمة
+          input#service.input(type="text", placeholder="زيارة منزلية / تحاليل / استشارة", list="services", data-service)
+          datalist#services
+            option(value="زيارة منزلية")
+            option(value="استشارة")
+            option(value="تحاليل")
+            option(value="Home Visit")
+            option(value="Consultation")
+            option(value="Lab Test")
+
+        .split-row
+          .field
+            label.label(for="total") إجمالي السعر
+            .input-group
+              input#total.input.with-suffix(type="number", min="0", step="1", placeholder="0", required, data-total, dir="ltr")
+              span.input-suffix EGP
+          .field
+            label.label(for="deposit") العربون
+            .input-group
+              input#deposit.input.with-suffix(type="number", min="0", step="1", placeholder="0", data-deposit, dir="ltr")
+              span.input-suffix EGP
+
+        .remaining-card(style="margin-top:.75rem")
+          .remaining-label
+            i(data-lucide="alert-circle")
+            | المبلغ المتبقي
+          .remaining-amount(data-remaining) —
+
+        .field(style="margin-top:1rem")
+          label.label(for="notes") ملاحظات الموعد
+          textarea#notes.textarea(placeholder="ملاحظات…", data-notes, rows="2")
+
+        .login-actions(style="margin-top:1.25rem")
+          button.btn.btn-primary(type="submit", data-submit, style="width:100%")
+            i(data-lucide="calendar-check")
+            span(data-btn-text) إنشاء الحجز
+
+block pageScripts
+  script(type="module", src="/js/pages/bookings-new.js")

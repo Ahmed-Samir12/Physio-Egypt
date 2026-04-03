@@ -1,0 +1,164 @@
+block vars
+
+doctype html
+html(lang="en")
+  head
+    meta(charset="utf-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1")
+    title #{pageTitle ? pageTitle + ' · Physio Egypt' : 'Physio Egypt'}
+
+    link(rel="icon", type="image/jpeg", href="/images/icon.jpeg")
+    link(rel="apple-touch-icon", href="/images/icon.jpeg")
+
+    link(rel="preconnect", href="https://fonts.googleapis.com")
+    link(rel="preconnect", href="https://fonts.gstatic.com", crossorigin)
+    link(href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;0,9..40,700;1,9..40,400&family=Syne:wght@700;800&display=swap", rel="stylesheet")
+
+    if isProd
+      link(rel="stylesheet", href="/dist/css/main.css")
+    else
+      link(rel="stylesheet", href="/css/base.css")
+      link(rel="stylesheet", href="/css/components.css")
+      link(rel="stylesheet", href="/css/layout.css")
+
+    block pageStyles
+
+    script(src="/js/vendor/lucide.min.js")
+
+  body
+    .drawer-backdrop(data-drawer-backdrop)
+    .app(data-app)
+
+      aside.sidebar
+        a.brand(href="/dashboard")
+          img.brand-logo(src="/images/icon.jpeg", alt="Physio Egypt", width="34", height="34")
+          .text
+            .name Physio Egypt
+            .tag Home Physio Services
+
+        nav.nav
+          a(href="/dashboard")
+            i(data-lucide="layout-dashboard")
+            span Dashboard
+          a(href="/bookings")
+            i(data-lucide="calendar-check")
+            span Bookings
+          a(href="/patients")
+            i(data-lucide="users")
+            span Patients
+          a(href="/admin/users", data-admin-only).hidden
+            i(data-lucide="shield-check")
+            span Admin · Users
+          a(href="/profile")
+            i(data-lucide="user-circle")
+            span My Profile
+
+        .sidebar-footer
+          .user-card
+            .row
+              .user-avatar-pill(data-user-avatar) U
+              .who
+                .n(data-user-name) Loading…
+                .e(data-user-email)
+            .row
+              span.badge.badge-blue(data-user-role) employee
+              button.btn.btn-ghost.btn-sm(type="button", data-sign-out)
+                i(data-lucide="log-out")
+                | Sign out
+
+          button.sidebar-toggle(type="button", data-sidebar-toggle)
+            span.label Collapse
+            i(data-lucide="chevrons-left")
+
+      .main
+        header.topbar
+          .topbar-inner
+            .topbar-left
+              button.icon-btn.burger-btn(type="button", data-burger, aria-label="Open menu")
+                i(data-lucide="menu")
+              .topbar-title-wrap
+                h1.page-title(data-page-title)= pageTitle || 'Dashboard'
+                p.crumb(data-page-crumb)= pageCrumb || 'Physio Egypt'
+
+            .topbar-right
+              .search-wrap
+                i(data-lucide="search")
+                input.input.search-input(type="search", placeholder="Search patients…", data-global-search, autocomplete="off")
+                .search-dropdown(data-search-dropdown)
+
+              .avatar-menu-wrap(style="position:relative")
+                button.avatar(type="button", data-avatar-btn, aria-label="Profile menu")
+                  span.dot(data-user-avatar2) U
+                  i.caret(data-lucide="chevron-down")
+                .dropdown(data-avatar-menu)
+                  .dropdown-header
+                    .dropdown-user-name(data-user-name2) —
+                    .dropdown-user-email(data-user-email2)
+                  .sep
+                  a(href="/profile")
+                    i(data-lucide="user-circle")
+                    | My Profile
+                  a(href="/profile#password")
+                    i(data-lucide="key-round")
+                    | Change Password
+                  .sep
+                  button(type="button", data-sign-out2)
+                    i(data-lucide="log-out")
+                    | Sign Out
+
+        main.content
+          block content
+
+    if isProd
+      script(type="module", src="/dist/js/alert.js")
+    else
+      script(type="module", src="/js/alert.js")
+
+    script(type="module").
+      import { initSidebar } from '/js/components/sidebar.js';
+      import { initReveal } from '/js/components/reveal.js';
+      import { requireAuth, wireGlobalAuthUI } from '/js/auth.js';
+      import { initGlobalSearch } from '/js/search.js';
+
+      window.lucide?.createIcons?.({ attrs: { 'stroke-width': 1.8 } });
+      initSidebar();
+      initReveal();
+
+      const me = await requireAuth();
+      wireGlobalAuthUI(me);
+      initGlobalSearch();
+
+      // Sync dropdown header
+      if (me) {
+        const u = me?.data?.user || me?.user || me;
+        const n2 = document.querySelector('[data-user-name2]');
+        const e2 = document.querySelector('[data-user-email2]');
+        if (n2) n2.textContent = u?.name || '';
+        if (e2) e2.textContent = u?.email || '';
+
+        const initials = String(u?.name || 'U').split(' ').filter(Boolean).slice(0,2).map(x=>x[0]?.toUpperCase()).join('') || 'U';
+        const photoImg = u?.photo ? `<img src="${u.photo}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">` : null;
+
+        const av1 = document.querySelector('[data-user-avatar]');
+        const av2 = document.querySelector('[data-user-avatar2]');
+        if (av1) { av1.innerHTML = photoImg || ''; if (!photoImg) av1.textContent = initials; }
+        if (av2) { av2.innerHTML = photoImg || ''; if (!photoImg) av2.textContent = initials; }
+      }
+
+      // Avatar dropdown
+      const btn = document.querySelector('[data-avatar-btn]');
+      const menu = document.querySelector('[data-avatar-menu]');
+      btn?.addEventListener('click', (e) => { e.stopPropagation(); menu?.classList.toggle('is-open'); });
+      document.addEventListener('click', (e) => {
+        if (menu && !menu.contains(e.target) && !btn?.contains(e.target)) menu.classList.remove('is-open');
+      });
+      document.addEventListener('keydown', (e) => { if (e.key === 'Escape') menu?.classList.remove('is-open'); });
+
+      // Active nav highlight
+      const path = window.location.pathname;
+      document.querySelectorAll('.nav a').forEach(a => {
+        const href = a.getAttribute('href');
+        a.classList.toggle('is-active', href === path || (href !== '/dashboard' && path.startsWith(href)));
+      });
+
+    block pageScripts

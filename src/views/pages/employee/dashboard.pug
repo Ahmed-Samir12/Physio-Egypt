@@ -1,0 +1,64 @@
+extends ../../layouts/main.pug
+
+block vars
+  - var pageTitle = 'Employee Dashboard'
+  - var pageCrumb = 'مرحباً بك'
+
+block pageStyles
+  link(rel="stylesheet", href="/css/pages/dashboard.css")
+
+block content
+  .grid-stats
+    .card.card-pad.card-stat.card-hover.reveal
+      .stat-icon-wrap.stat-icon-blue
+        i(data-lucide="calendar-check")
+      .secondary(data-stat-label="todayBookings") حجوزات اليوم
+      .stat-value.tnum(data-stat-value="todayBookings") —
+    .card.card-pad.card-stat.card-hover.reveal
+      .stat-icon-wrap.stat-icon-green
+        i(data-lucide="banknote")
+      .secondary(data-stat-label="todayDeposits") عربون اليوم
+      .stat-value.tnum(data-stat-value="todayDeposits") —
+    .card.card-pad.card-stat.card-hover.reveal
+      .stat-icon-wrap.stat-icon-purple
+        i(data-lucide="layers")
+      .secondary(data-stat-label="allBookings") إجمالي الحجوزات
+      .stat-value.tnum(data-stat-value="allBookings") —
+    .card.card-pad.card-stat.card-hover.reveal
+      .stat-icon-wrap.stat-icon-amber
+        i(data-lucide="trending-up")
+      .secondary(data-stat-label="allRevenue") إجمالي الإيرادات
+      .stat-value.tnum(data-stat-value="allRevenue") —
+
+  .section
+    .section-head
+      h3 المواعيد
+      .date-filter-row(style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap")
+        input.input(type="date", id="dashDateFilter", style="width:auto;min-width:150px")
+        button.btn.btn-primary.btn-sm(type="button", id="dashDateBtn")
+          i(data-lucide="search")
+          | عرض
+        button.btn.btn-ghost.btn-sm(type="button", id="dashTodayBtn")
+          i(data-lucide="calendar")
+          | اليوم
+      a.btn.btn-ghost.btn-sm(href="/bookings") عرض الكل
+    .card.card-pad.card-glass.reveal
+      .table-wrap
+        table.table
+          thead
+            tr
+              th الوقت
+              th المريض
+              th الهاتف
+              th الخدمة
+              th الحالة
+              th الدفع
+              th الإجراءات
+          tbody(data-appointments-body)
+
+  a.btn.btn-primary.fab(href="/bookings/new")
+    i(data-lucide="plus")
+    span حجز جديد
+
+block pageScripts
+  script(type="module", src="/js/pages/employee-dashboard.js")

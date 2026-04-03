@@ -1,0 +1,65 @@
+extends ../../layouts/main.pug
+
+block vars
+  - var pageTitle = 'تفاصيل الموظف'
+  - var pageCrumb = 'أداء الموظف'
+
+block pageStyles
+  link(rel="stylesheet", href="/css/pages/dashboard.css")
+
+block content
+
+  //- ── Employee info card ──────────────────────────────────
+  .card.card-pad.reveal(style="margin-bottom:1.5rem;display:flex;gap:1rem;align-items:center")
+    .stat-icon-wrap.stat-icon-blue(style="width:56px;height:56px;flex-shrink:0")
+      i(data-lucide="user-circle")
+    div
+      h2.patient-name(data-emp-name style="margin:0") —
+      p.secondary(data-emp-email style="margin:.2rem 0 0") —
+      span.badge.badge-muted(data-emp-role style="margin-top:.4rem") —
+
+  //- ── Summary stat cards ───────────────────────────────────
+  .grid-stats(style="margin-bottom:1.5rem")
+    .card.card-pad.card-stat.reveal
+      .stat-icon-wrap.stat-icon-purple
+        i(data-lucide="layers")
+      .secondary إجمالي الحجوزات
+      .stat-value.tnum(data-emp-total-bookings) —
+    .card.card-pad.card-stat.reveal
+      .stat-icon-wrap.stat-icon-amber
+        i(data-lucide="trending-up")
+      .secondary إجمالي الإيرادات
+      .stat-value.tnum(data-emp-total-revenue) —
+    .card.card-pad.card-stat.reveal
+      .stat-icon-wrap.stat-icon-green
+        i(data-lucide="banknote")
+      .secondary إجمالي العربون
+      .stat-value.tnum(data-emp-total-deposits) —
+
+  //- ── Bookings table ──────────────────────────────────────
+  .section
+    .section-head
+      h3 الحجوزات
+      .date-range-filter(style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap")
+        input.input(type="date", data-from, style="width:auto")
+        span.secondary إلى
+        input.input(type="date", data-to, style="width:auto")
+        button.btn.btn-primary.btn-sm(type="button", data-filter-btn)
+          i(data-lucide="search")
+          | بحث
+    .card.card-pad.card-glass.reveal
+      .table-wrap
+        table.table
+          thead
+            tr
+              th التاريخ
+              th الوقت
+              th المريض
+              th الخدمة
+              th الحالة
+              th الإجمالي
+              th
+          tbody(data-emp-bookings-body)
+
+block pageScripts
+  script(type="module", src="/js/pages/admin-employee.js")

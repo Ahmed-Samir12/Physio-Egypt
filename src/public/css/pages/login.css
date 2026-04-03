@@ -1,0 +1,305 @@
+/* Login / Auth pages — Light Happy Theme */
+
+.login-shell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+}
+
+@media (max-width: 900px) {
+  .login-shell {
+    grid-template-columns: 1fr;
+  }
+  .login-left {
+    display: none;
+  }
+}
+
+/* Left decorative panel */
+.login-left {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 60%, #8b5cf6 100%);
+  display: flex;
+  align-items: flex-end;
+  padding: 3rem;
+  width: 100%;
+}
+.login-left .hero {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+}
+.login-left h1 {
+  font-size: clamp(2rem, 3.5vw, 3rem);
+  color: #fff;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+}
+.login-left p {
+  margin-top: 1rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 1.05rem;
+}
+
+/* Decorative blobs */
+.login-left .pattern {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.login-left .pattern::before,
+.login-left .pattern::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+}
+.login-left .pattern::before {
+  width: 560px;
+  height: 560px;
+  top: -200px;
+  right: -180px;
+  background: rgba(255, 255, 255, 0.1);
+}
+.login-left .pattern::after {
+  width: 420px;
+  height: 420px;
+  bottom: -150px;
+  left: -120px;
+  background: rgba(255, 255, 255, 0.07);
+}
+.login-left .shapes {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.login-left .shapes::before {
+  content: '';
+  position: absolute;
+  width: 220px;
+  height: 220px;
+  top: 30%;
+  left: 20%;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 30px;
+  transform: rotate(15deg);
+}
+.login-left .shapes::after {
+  content: '';
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  top: 18%;
+  right: 22%;
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50%;
+}
+
+/* Right side — card */
+.login-right {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: var(--bg-base);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 420px;
+  padding: 2.2rem 2rem;
+}
+
+.login-card h2 {
+  font-size: 1.7rem;
+  color: var(--text-primary);
+  margin-bottom: 0.3rem;
+}
+.login-card .sub {
+  color: var(--text-secondary);
+  margin-bottom: 1.75rem;
+  font-size: 0.95rem;
+}
+
+.login-card form {
+  display: grid;
+  gap: 1.1rem;
+}
+
+/* Auth links row */
+.auth-links {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  flex-wrap: wrap;
+}
+.auth-link {
+  color: var(--accent);
+  font-weight: 500;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.auth-link:hover {
+  color: var(--accent-dim);
+}
+
+/* Auth view switcher */
+.auth-view {
+  display: none;
+}
+.auth-view.is-active {
+  display: grid;
+  gap: 1.1rem;
+}
+
+/* PW toggle button inside input */
+.pw-toggle {
+  position: absolute;
+  inset-inline-end: 0.5rem;
+  inset-block: 50%;
+  transform: translateY(-50%);
+  padding: 0.35rem;
+  border-radius: 8px;
+  pointer-events: auto;
+  z-index: 2;
+}
+
+/* Divider */
+.divider-text {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+.divider-text::before,
+.divider-text::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* Reveal animation */
+.reveal {
+  opacity: 0;
+  transform: translateY(14px);
+  animation: revealUp 0.45s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+  animation-delay: var(--d, 0ms);
+}
+@keyframes revealUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Done / success state for reset password */
+.error-done-wrap {
+  text-align: center;
+  padding: 1rem 0;
+}
+.done-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #22c55e, #16a34a);
+  color: #fff;
+  font-size: 2rem;
+  display: grid;
+  place-items: center;
+  margin: 0 auto 1.25rem;
+  box-shadow: 0 4px 20px rgba(34, 197, 94, 0.35);
+}
+.error-done-wrap h2 {
+  margin-bottom: 0.5rem;
+}
+.error-done-wrap .sub {
+  color: var(--text-secondary);
+  font-size: 0.95rem;
+}
+
+/* ── Login branding ──────────────────────────────────────*/
+.login-brand {
+  margin-bottom: 1.25rem;
+}
+.login-brand img {
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+  width: 100%;
+  height: 100%;
+}
+.login-left h1 {
+  font-size: clamp(3.4rem, 4vw, 3.2rem);
+  color: #fff;
+  letter-spacing: -0.04em;
+  line-height: 1;
+  margin-bottom: 0.4rem;
+}
+.login-tagline {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 600;
+  font-size: 2rem !important;
+  margin-top: 0 !important;
+}
+.login-sub {
+  color: rgba(255, 255, 255, 0.65) !important;
+  font-size: 1.5rem !important;
+  margin-top: 0.25rem !important;
+}
+
+/* ── Card header with icon ───────────────────────────────*/
+.login-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.9rem;
+  margin-bottom: 1.5rem;
+}
+.login-card-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  border: 1px solid rgba(14, 165, 233, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+.login-card-icon svg,
+.login-card-icon i {
+  width: 20px;
+  height: 20px;
+}
+.login-card-icon.icon-green {
+  background: rgba(34, 197, 94, 0.08);
+  border-color: rgba(34, 197, 94, 0.2);
+  color: #16a34a;
+}
+.login-card-icon.icon-amber {
+  background: rgba(245, 158, 11, 0.08);
+  border-color: rgba(245, 158, 11, 0.2);
+  color: #b45309;
+}
+
+.login-card-header h2 {
+  font-size: 1.5rem;
+  margin-bottom: 0.2rem;
+}
+.login-card-header .sub {
+  color: var(--text-secondary);
+  font-size: 0.88rem;
+}
+
+.auth-view-form {
+  display: grid;
+  gap: 1rem;
+}

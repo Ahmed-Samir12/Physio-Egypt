@@ -1,0 +1,14 @@
+extends ../layouts/main.pug
+
+block vars
+  - var pageTitle = 'Dashboard'
+  - var pageCrumb = 'جارٍ التوجيه…'
+
+block content
+  .card.card-pad.card-glass.reveal
+    h3 جارٍ التحميل
+    p.secondary We’re loading your role and routing you to the right dashboard.
+
+block pageScripts
+  script(type="module", src="/js/pages/dashboard.js")
+

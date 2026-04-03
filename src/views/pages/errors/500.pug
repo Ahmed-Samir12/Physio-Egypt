@@ -1,0 +1,38 @@
+doctype html
+html(lang="en")
+  head
+    meta(charset="utf-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1")
+    link(rel="icon", type="image/jpeg", href="/images/icon.jpeg")
+    title 500 · Server Error · Physio Egypt
+    link(rel="preconnect", href="https://fonts.googleapis.com")
+    link(rel="preconnect", href="https://fonts.gstatic.com", crossorigin)
+    link(href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Syne:wght@700&display=swap", rel="stylesheet")
+    link(rel="stylesheet", href="/css/base.css")
+    link(rel="stylesheet", href="/css/components.css")
+    link(rel="stylesheet", href="/css/pages/errors.css")
+    script(src="/js/vendor/lucide.min.js")
+  body
+    .error-shell
+      .error-card.reveal
+        .error-icon-wrap
+          .error-blob.blob-red
+          .error-icon.icon-red
+            i(data-lucide="server-crash")
+        .error-code.code-red 500
+        h1.error-title حدث خطأ في الخادم
+        p.error-msg حدث خطأ غير متوقع في الخادم. يرجى المحاولة مرة أخرى.
+        if message && process.env.NODE_ENV === 'development'
+          .error-dev-msg= message
+        .error-actions
+          a.btn.btn-primary(href="/dashboard")
+            i(data-lucide="layout-dashboard")
+            | الذهاب إلى لوحة التحكم
+          button.btn.btn-ghost(onclick="window.location.reload()")
+            i(data-lucide="refresh-cw")
+            | إعادة المحاولة
+    script.
+      window.lucide?.createIcons?.({ attrs: { 'stroke-width': 1.8 } });
+    script(type="module").
+      import { initReveal } from '/js/components/reveal.js';
+      initReveal();

@@ -1,0 +1,22 @@
+extends baseEmail
+
+block content
+    .email-container
+        h2.email-header Welcome to Clinic System, #{userName}! 👋
+
+        p.email-content Thanks for signing up! Please verify your email address to activate your account.
+
+        .button-container
+            a.button(href=url) تفعيل حسابي
+
+        p.copy-link-section
+            | Or copy and paste this link into your browser:
+            br
+            a(href=url)= url 
+
+        .security-notice
+            p
+                strong ⚠️ Security Notice:
+            ul
+                li This link expires in #[strong 1 hour]
+                li If you didn't create an account, ignore this email

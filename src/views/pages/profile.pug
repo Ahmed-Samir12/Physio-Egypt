@@ -1,0 +1,107 @@
+extends ../layouts/main.pug
+
+block vars
+  - var pageTitle = 'My Profile'
+  - var pageCrumb = 'إعدادات الحساب'
+
+block pageStyles
+  link(rel="stylesheet", href="/css/pages/profile.css")
+
+block content
+  .profile-grid
+
+    //- ── Left: avatar + info card ────────────────────────
+    .profile-sidebar-card.card.card-pad.reveal
+      .profile-avatar-wrap(style="position:relative;cursor:pointer", title="انقر لتغيير الصورة", data-photo-trigger)
+        .profile-avatar(data-profile-avatar) U
+        input(type="file", accept="image/*", data-photo-input, style="display:none")
+        .profile-avatar-badge
+          i(data-lucide="camera")
+      h2.profile-name(data-profile-name) Loading…
+      p.profile-email(data-profile-email)
+      span.badge.badge-blue.profile-role(data-profile-role) employee
+
+      .profile-meta-list
+        .profile-meta-item
+          i(data-lucide="phone")
+          span Clinic: 01106500395
+        .profile-meta-item
+          i(data-lucide="map-pin")
+          span All Governorates of Egypt
+        .profile-meta-item
+          i(data-lucide="building-2")
+          span Physio Egypt — Home Physio Services
+
+      //- ── Session management ──────────────────────────
+      .profile-sessions-block
+        .profile-sessions-title
+          i(data-lucide="shield-alert")
+          span Session Management
+        p.profile-sessions-desc سجّل الخروج من جميع الأجهزة التي سجّلت الدخول منها. سيتم إنهاء جميع الجلسات النشطة بما فيها هذه الجلسة.
+        button.btn.btn-logout-all(type="button", data-logout-all)
+          i(data-lucide="log-out")
+          span تسجيل الخروج من جميع الأجهزة
+
+    //- ── Right: tabs (info + password) ──────────────────
+    .profile-main
+      .profile-tabs
+        button.profile-tab.is-active(type="button", data-tab="info")
+          i(data-lucide="user")
+          | بيانات الحساب
+        button.profile-tab(type="button", data-tab="password", id="tab-password")
+          i(data-lucide="key-round")
+          | تغيير كلمة المرور
+
+      //- Info panel
+      .profile-panel.is-active(data-panel="info")
+        .card.card-pad.reveal
+          h3.profile-section-title بيانات الحساب
+          .profile-form-grid
+            .field
+              label.label الاسم الكامل
+              input#prof-name.input(type="text", placeholder="اسمك الكامل", data-prof-name)
+            .field
+              label.label البريد الإلكتروني
+              input#prof-email.input(type="email", placeholder="بريدك الإلكتروني", data-prof-email, disabled)
+            .field
+              label.label الصلاحية
+              input.input(type="text", data-prof-role, disabled)
+          .profile-actions
+            .inline-error.hidden(data-info-error)
+            .inline-error.hidden(data-info-success)
+            button.btn.btn-primary(type="button", data-save-info)
+              i(data-lucide="save")
+              | حفظ التغييرات
+
+      //- Password panel
+      .profile-panel(data-panel="password")
+        .card.card-pad.reveal
+          h3.profile-section-title تغيير كلمة المرور
+          .profile-form-grid.single-col
+            .field
+              label.label كلمة المرور الحالية
+              .input-group
+                input#cur-pw.input.with-suffix(type="password", placeholder="كلمة المرور الحالية", data-cur-pw)
+                button.btn.btn-ghost.btn-sm.pw-toggle(type="button")
+                  i(data-lucide="eye")
+            .field
+              label.label كلمة المرور الجديدة
+              .input-group
+                input#new-pw.input.with-suffix(type="password", placeholder="8 أحرف على الأقل", data-new-pw)
+                button.btn.btn-ghost.btn-sm.pw-toggle(type="button")
+                  i(data-lucide="eye")
+            .field
+              label.label تأكيد كلمة المرور
+              .input-group
+                input#confirm-pw.input.with-suffix(type="password", placeholder="أعد كلمة المرور الجديدة", data-confirm-pw)
+                button.btn.btn-ghost.btn-sm.pw-toggle(type="button")
+                  i(data-lucide="eye")
+          .profile-actions
+            .inline-error.hidden(data-pw-error)
+            .inline-error.hidden(data-pw-success)
+            button.btn.btn-primary(type="button", data-save-pw)
+              i(data-lucide="key-round")
+              | تحديث كلمة المرور
+
+block pageScripts
+  script(type="module", src="/js/pages/profile.js")

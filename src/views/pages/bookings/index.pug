@@ -1,0 +1,54 @@
+extends ../../layouts/main.pug
+
+block vars
+  - var pageTitle = 'Bookings'
+  - var pageCrumb = 'All appointments'
+
+block pageStyles
+  link(rel="stylesheet", href="/css/pages/bookings.css")
+
+block content
+  .toolbar
+    .toolbar-left
+      .search-wrap(style="width:min(280px,50vw)")
+        i(data-lucide="search")
+        input.input.search-input(type="search", placeholder="بحث…", data-bookings-search, autocomplete="off")
+      .chips
+        button.chip.is-active(type="button", data-chip="all") الكل
+        button.chip(type="button", data-chip="pending") قيد الانتظار
+        button.chip(type="button", data-chip="confirmed") مؤكد
+        button.chip(type="button", data-chip="done") مكتمل
+        button.chip(type="button", data-chip="cancelled") ملغى
+      .field(style="min-width:180px")
+        label.label(for="date") التاريخ
+        input#date.input(type="date", data-date, dir="ltr")
+    .toolbar-right
+      a.btn.btn-primary(href="/bookings/new")
+        i(data-lucide="plus")
+        | حجز جديد
+
+  .card.card-pad.card-glass.reveal
+    .table-wrap
+      table.table
+        thead
+          tr
+            th التاريخ
+            th الوقت
+            th المريض
+            th الهاتف
+            th الخدمة
+            th الحالة
+            th الإجراءات
+        tbody(data-bookings-body)
+
+  .pagination
+    button.pager(type="button", data-prev)
+      i(data-lucide="chevron-right")
+      | السابق
+    span.secondary(data-page-info) —
+    button.pager(type="button", data-next)
+      | التالي
+      i(data-lucide="chevron-left")
+
+block pageScripts
+  script(type="module", src="/js/pages/bookings.js")

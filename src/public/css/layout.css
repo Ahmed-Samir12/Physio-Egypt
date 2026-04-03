@@ -1,0 +1,836 @@
+/* ═══════════════════════════════════════════════════════
+   App shell layout — Light Happy Theme
+   ═══════════════════════════════════════════════════════ */
+
+/* ── Variables ───────────────────────────────────────────*/
+:root {
+  --sidebar-w: 272px;
+  --sidebar-w-collapsed: 90px;
+  --sidebar-transition:
+    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  --text-fade: opacity 0.18s ease, visibility 0.18s ease;
+}
+
+/* ── App shell ───────────────────────────────────────────*/
+.app {
+  display: grid;
+  grid-template-columns: var(--sidebar-w) 1fr;
+  min-height: 100vh;
+  transition: grid-template-columns 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─────────────────────────────────────────────────────────
+   SIDEBAR
+   ───────────────────────────────────────────────────────*/
+.sidebar {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: var(--sidebar-w);
+
+  /* smooth width animation */
+  transition:
+    width 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+    background 0.2s ease;
+
+  /* layout */
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem 0.75rem;
+  overflow: hidden; /* clip sliding text — KEY */
+
+  /* visuals */
+  background: linear-gradient(180deg, #ffffff 0%, #f8faff 100%);
+  border-right: 1px solid var(--border);
+}
+
+/* ── Brand ───────────────────────────────────────────────*/
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(14, 165, 233, 0.15);
+  background: linear-gradient(
+    135deg,
+    rgba(14, 165, 233, 0.06),
+    rgba(99, 102, 241, 0.04)
+  );
+  text-decoration: none;
+  flex-shrink: 0;
+  min-width: 0; /* allow shrink */
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.brand-logo {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  object-fit: cover;
+  flex-shrink: 0; /* logo never shrinks */
+}
+
+.brand .text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  /* fade text out instead of jumping */
+  transition:
+    var(--text-fade),
+    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 200px;
+}
+.brand .name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text-primary);
+  font-size: 0.95rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.brand .tag {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+  margin-top: 0.05rem;
+  white-space: nowrap;
+}
+
+/* ── Nav ─────────────────────────────────────────────────*/
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  flex: 1; /* take remaining space */
+  min-height: 0;
+}
+
+.nav a {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.75rem;
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  border: 1px solid transparent;
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    border-color 0.2s ease;
+  font-weight: 500;
+  text-decoration: none;
+  white-space: nowrap;
+  overflow: hidden;
+  min-width: 0;
+}
+.nav a i,
+.nav a svg {
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0; /* icon never shrinks */
+}
+.nav a span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  /* fade the label */
+  transition:
+    var(--text-fade),
+    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 160px;
+}
+.nav a:hover {
+  background: var(--accent-soft);
+  border-color: rgba(14, 165, 233, 0.15);
+  color: var(--accent);
+}
+.nav a.is-active {
+  background: var(--accent-soft);
+  border-color: rgba(14, 165, 233, 0.25);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(14, 165, 233, 0.1);
+}
+
+/* ── Sidebar footer ──────────────────────────────────────*/
+.sidebar-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* User card */
+.user-card {
+  display: grid;
+  gap: 0.45rem;
+  padding: 0.75rem 0.8rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--bg-raised);
+  overflow: hidden;
+  min-width: 0;
+}
+.user-card .row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.6rem;
+  min-width: 0;
+  overflow: hidden;
+}
+.user-card .row:first-child {
+  align-items: center;
+}
+
+/* user avatar pill */
+.user-avatar-pill {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--accent), #6366f1);
+  color: #fff;
+  font-family: var(--font-display);
+  font-size: 0.78rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.user-card .who {
+  display: grid;
+  gap: 0.05rem;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
+  transition:
+    var(--text-fade),
+    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 160px;
+}
+.user-card .who .n {
+  font-weight: 700;
+  font-size: 0.85rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.user-card .who .e {
+  color: var(--text-muted);
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.user-card .row:last-child {
+  transition:
+    var(--text-fade),
+    max-width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  max-width: 300px;
+}
+
+/* Collapse toggle button */
+.sidebar-toggle {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.6rem 0.75rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  transition:
+    background 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  white-space: nowrap;
+  overflow: hidden;
+  width: 100%;
+}
+.sidebar-toggle:hover {
+  border-color: rgba(14, 165, 233, 0.25);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.sidebar-toggle .label {
+  transition:
+    var(--text-fade),
+    max-width 0.25s ease;
+  max-width: 120px;
+  overflow: hidden;
+}
+.sidebar-toggle svg,
+.sidebar-toggle i {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* ─────────────────────────────────────────────────────────
+   COLLAPSED STATE — widths & fades, no display:none jumps
+   ───────────────────────────────────────────────────────*/
+.app.is-collapsed {
+  grid-template-columns: var(--sidebar-w-collapsed) 1fr;
+}
+
+.app.is-collapsed .sidebar {
+  width: var(--sidebar-w-collapsed);
+}
+
+/* Fade + collapse text elements */
+.app.is-collapsed .brand .text,
+.app.is-collapsed .nav a span,
+.app.is-collapsed .user-card .who,
+.app.is-collapsed .user-card .row:last-child,
+.app.is-collapsed .sidebar-toggle .label {
+  opacity: 0;
+  visibility: hidden;
+  max-width: 0;
+  overflow: hidden;
+}
+
+/* Centre nav icons when collapsed */
+.app.is-collapsed .nav a {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+/* Rotate collapse arrow */
+.app.is-collapsed .sidebar-toggle svg,
+.app.is-collapsed .sidebar-toggle i {
+  transform: rotate(180deg);
+}
+
+/* Centre toggle button */
+.app.is-collapsed .sidebar-toggle {
+  justify-content: center;
+}
+
+/* Centre brand */
+.app.is-collapsed .brand {
+  justify-content: center;
+  padding-inline: 0;
+}
+
+/* Centre user card pill */
+.app.is-collapsed .user-card {
+  padding: 0.6rem;
+}
+.app.is-collapsed .user-card .row {
+  justify-content: center;
+}
+
+/* ─────────────────────────────────────────────────────────
+   TOPBAR
+   ───────────────────────────────────────────────────────*/
+.main {
+  display: grid;
+  grid-template-rows: auto 1fr;
+  min-width: 0;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid var(--border);
+  background: rgba(248, 250, 255, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+.topbar-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem var(--space-7);
+}
+.topbar-left {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-width: 0;
+}
+.topbar-title-wrap {
+  display: grid;
+  gap: 0;
+  min-width: 0;
+}
+.page-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.crumb {
+  color: var(--text-muted);
+  font-size: 0.82rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+/* ── Global search ───────────────────────────────────────*/
+.search-wrap {
+  position: relative;
+  width: min(340px, 35vw);
+}
+.search-wrap > i,
+.search-wrap > svg {
+  position: absolute;
+  left: 0.85rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 15px;
+  height: 15px;
+  color: var(--text-muted);
+  pointer-events: none;
+  z-index: 1;
+}
+.search-input {
+  padding-left: 2.35rem !important;
+  background: var(--bg-raised);
+  border-color: var(--border);
+  font-size: 0.86rem;
+  height: 36px;
+  border-radius: var(--radius-md);
+}
+.search-input:focus {
+  background: var(--bg-surface);
+}
+
+.search-dropdown {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  z-index: 200;
+  max-height: 420px;
+  overflow-y: auto;
+}
+.search-dropdown.is-open {
+  display: block;
+}
+.search-section-label {
+  padding: 0.35rem 0.85rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  background: var(--bg-raised);
+}
+.search-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.65rem 0.85rem;
+  text-decoration: none;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.15s ease;
+}
+.search-row:last-child {
+  border-bottom: none;
+}
+.search-row:hover,
+.search-row:focus {
+  background: var(--accent-soft);
+  outline: none;
+}
+.search-row-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: 7px;
+  background: var(--accent-soft);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.search-row-icon svg,
+.search-row-icon i {
+  width: 13px;
+  height: 13px;
+}
+.search-row-text {
+  flex: 1;
+  min-width: 0;
+}
+.search-row-label {
+  font-size: 0.86rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+.search-row-sub {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  display: block;
+}
+.search-row-arr {
+  width: 13px;
+  height: 13px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.search-loading,
+.search-empty {
+  padding: 1rem 0.85rem;
+  color: var(--text-secondary);
+  font-size: 0.86rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+.search-spin {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  display: inline-block;
+  animation: spin 600ms linear infinite;
+}
+
+/* ── Icon button ─────────────────────────────────────────*/
+.icon-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  transition: var(--transition);
+}
+.icon-btn:hover {
+  border-color: rgba(14, 165, 233, 0.3);
+  background: var(--accent-soft);
+}
+.icon-btn svg,
+.icon-btn i {
+  width: 17px;
+  height: 17px;
+  color: var(--text-secondary);
+}
+
+/* ── Topbar avatar ───────────────────────────────────────*/
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3rem 0.45rem;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  cursor: pointer;
+  transition: var(--transition);
+}
+.avatar:hover {
+  border-color: rgba(14, 165, 233, 0.3);
+}
+.avatar .dot {
+  width: 30px;
+  height: 30px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.8rem;
+  color: #fff;
+  background: linear-gradient(135deg, var(--accent), #6366f1);
+}
+.avatar .caret {
+  width: 14px;
+  height: 14px;
+  color: var(--text-muted);
+}
+
+/* ── Dropdown menu ───────────────────────────────────────*/
+.dropdown {
+  position: absolute;
+  inset-inline-end: 0;
+  inset-block-start: calc(100% + 0.5rem);
+  width: 230px;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  background: var(--bg-surface);
+  box-shadow: var(--shadow-md);
+  overflow: hidden;
+  transform: translateY(6px) scale(0.98);
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+    opacity 0.2s ease;
+  z-index: 60;
+}
+.dropdown.is-open {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+.dropdown-header {
+  padding: 0.8rem 0.85rem 0.55rem;
+  border-bottom: 1px solid var(--border);
+}
+.dropdown-user-name {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: var(--text-primary);
+}
+.dropdown-user-email {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  margin-top: 1px;
+}
+
+.dropdown a,
+.dropdown button {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.72rem 0.85rem;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.88rem;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+.dropdown a:hover,
+.dropdown button:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+.dropdown .sep {
+  height: 1px;
+  background: var(--border);
+}
+.dropdown svg,
+.dropdown i {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* ── Content area ────────────────────────────────────────*/
+.content {
+  padding: 1.75rem var(--space-7);
+}
+
+/* ── FAB ─────────────────────────────────────────────────*/
+.fab {
+  position: fixed;
+  inset-inline-end: 1.5rem;
+  inset-block-end: 1.5rem;
+  z-index: 40;
+  border-radius: 999px;
+  padding: 0.85rem 1.1rem;
+  box-shadow: var(--shadow-md), var(--shadow-glow);
+}
+@media (max-width: 480px) {
+  .fab span {
+    display: none;
+  }
+  .fab {
+    padding: 1rem;
+    border-radius: 50%;
+  }
+}
+
+@media (min-width: 769px) {
+  .burger-btn {
+    display: none;
+  }
+}
+
+/* ── Drawer backdrop (mobile) ────────────────────────────*/
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.3);
+  backdrop-filter: blur(6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s ease;
+  z-index: 70;
+}
+.drawer-backdrop.is-open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ─────────────────────────────────────────────────────────
+   MOBILE — drawer mode
+   ───────────────────────────────────────────────────────*/
+@media (max-width: 768px) {
+  .app {
+    grid-template-columns: 1fr;
+    transition: none;
+  }
+  .sidebar {
+    position: fixed;
+    inset-block: 0;
+    inset-inline-start: 0;
+    width: min(82vw, 280px) !important; /* override collapsed width */
+    transform: translateX(-110%);
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 80;
+  }
+  .app.is-drawer-open .sidebar {
+    transform: translateX(0);
+  }
+  /* Re-show all text in mobile drawer (even if collapsed state is set) */
+  .sidebar .brand .text,
+  .sidebar .nav a span,
+  .sidebar .user-card .who,
+  .sidebar .user-card .row:last-child,
+  .sidebar .sidebar-toggle .label {
+    opacity: 1 !important;
+    visibility: visible !important;
+    max-width: 200px !important;
+  }
+  .sidebar .nav a {
+    justify-content: flex-start !important;
+  }
+  .sidebar .brand {
+    justify-content: flex-start !important;
+  }
+
+  .sidebar-toggle {
+    display: none;
+  } /* hide collapse btn on mobile */
+  .topbar-inner {
+    padding-inline: 0.85rem;
+  }
+  .content {
+    padding-inline: 1rem;
+    max-width: 100vw;
+  }
+  /* don't apply collapsed grid layout on mobile */
+  .app.is-collapsed {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ─────────────────────────────────────────────────────────
+   CURSOR
+   ───────────────────────────────────────────────────────*/
+button,
+a,
+[role='button'],
+select,
+.chip,
+.pager,
+.nav a,
+.brand,
+.card-hover,
+.search-row,
+.avatar,
+.sidebar-toggle,
+.profile-tab,
+.btn,
+label[for],
+.step {
+  cursor: pointer;
+}
+
+/* ─────────────────────────────────────────────────────────
+   UTILITIES
+   ───────────────────────────────────────────────────────*/
+.tnum {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─────────────────────────────────────────────────────────
+   NAV TOOLTIP (shown when sidebar is collapsed)
+   ───────────────────────────────────────────────────────*/
+.nav-tooltip {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  background: var(--text-primary);
+  color: #fff;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 0.35rem 0.7rem;
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 200;
+  /* hidden by default */
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 0.15s ease,
+    transform 0.15s ease;
+  transform: translateY(-50%) translateX(-4px);
+}
+/* small arrow */
+.nav-tooltip::before {
+  content: '';
+  position: absolute;
+  right: 100%;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 5px solid transparent;
+  border-right-color: var(--text-primary);
+}
+
+/* Only show tooltip when sidebar is collapsed AND hovering the link */
+.app.is-collapsed .nav a {
+  position: relative; /* needed for absolute tooltip */
+}
+.app.is-collapsed .nav a:hover .nav-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%) translateX(0);
+}
+
+/* ─────────────────────────────────────────────────────────
+   NO-TRANSITION UTILITY (used on page load to skip animation)
+   ───────────────────────────────────────────────────────*/
+.no-transition,
+.no-transition * {
+  transition: none !important;
+}

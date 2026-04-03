@@ -1,0 +1,26 @@
+extends ../../layouts/main.pug
+
+block vars
+  - var pageTitle = 'إدارة المستخدمين'
+  - var pageCrumb = 'لوحة الإدارة'
+
+block content
+  .card.card-pad.card-glass.reveal
+    .section-head(style="margin-bottom:1rem")
+      h3 المستخدمون
+      .secondary الحسابات النشطة
+    .table-wrap
+      table.table
+        thead
+          tr
+            th الاسم
+            th البريد الإلكتروني
+            th الصلاحية
+            th الحالة
+            th تاريخ الإنشاء
+            th الإجراءات
+        tbody(data-users-body)
+
+block pageScripts
+  script(type="module", src="/js/pages/admin-users.js")
+
