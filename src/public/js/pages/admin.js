@@ -27,7 +27,7 @@ function badgeForStatus(s) {
   if (s === 'pending') return 'badge badge-amber';
   if (s === 'cancelled' || s === 'canceled') return 'badge badge-red';
   if (s === 'done') return 'badge badge-blue';
-  if (s === 'retrieval') return 'badge badge-green';
+  if (s === 'retrieval') return 'badge badge-dark-blue';
   return 'badge badge-muted';
 }
 
@@ -68,7 +68,7 @@ function updateDonut(counts) {
   if (!canvas || !window.Chart) return;
 
   const data = [pending, confirmed, done, retrieval, cancelled];
-  const colors = ['#f59e0b', '#22c55e', '#6366f1', '#16a34a', '#ef4444'];
+  const colors = ['#f59e0b', '#22c55e', '#6366f1', '#0ea5e9', '#ef4444'];
   const labels = ['قيد الانتظار', 'مؤكد', 'مكتمل', 'مسترد', 'ملغى'];
 
   if (donutChart) {
@@ -143,27 +143,54 @@ function wireStatusFilter() {
   );
 }
 
-async function loadAdminDashboard() {
+async function loadAdminDashboard(date = null) {
   const perfBody = document.querySelector('[data-perf-body]');
   const bookingsBody = document.querySelector('[data-bookings-body]');
   if (perfBody) renderTableSkeleton(perfBody, 5, 6);
   if (bookingsBody) renderTableSkeleton(bookingsBody, 6, 7);
 
   try {
-    const res = await apiFetch('/admin/dashboard', { method: 'GET' });
+    const url = date ? `/admin/dashboard?date=${date}` : '/admin/dashboard';
+
+    const res = await apiFetch(url, { method: 'GET' });
     if (!res) return;
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json?.message || 'فشل تحميل لوحة التحكم');
 
     const payload = json?.data || json;
     const today = payload?.today || {};
+    const allTime = payload?.allTime || {};
+
+    // Update card labels if a specific date was selected
+    const selectedDate = payload?.selectedDate;
+    const dateLabel = selectedDate
+      ? new Date(selectedDate).toLocaleDateString('ar-EG', {
+          day: 'numeric',
+          month: 'long',
+          year: 'numeric',
+        })
+      : null;
+
+    const todayBookingsLabel = document.querySelector(
+      '[data-stat-label="todayBookings"]',
+    );
+    const todayDepositsLabel = document.querySelector(
+      '[data-stat-label="todayDeposits"]',
+    );
+    if (todayBookingsLabel)
+      todayBookingsLabel.textContent = dateLabel
+        ? `حجوزات ${dateLabel}`
+        : 'حجوزات اليوم';
+    if (todayDepositsLabel)
+      todayDepositsLabel.textContent = dateLabel
+        ? `عربون ${dateLabel}`
+        : 'عربون اليوم';
 
     // Stats mapping from API shape
-    const allTime = payload?.allTime || {};
     const statsData = {
       todayBookings: today?.totalBookings ?? 0,
       todayDeposits: today?.totalDepositsCollected ?? 0,
-      allBookings: allTime?.totalBookings ?? payload?.totalBookings ?? 0,
+      allBookings: payload?.totalBookings ?? 0,
       allRevenue: allTime?.totalRevenue ?? today?.totalRevenue ?? 0,
     };
 
@@ -277,4 +304,26 @@ function setText(sel, val) {
   if (el) el.textContent = val;
 }
 
+// ── Date filter ──────────────────────────────────────────
+function injectDateFilter() {
+  const picker = document.getElementById('dashDatePicker');
+  const resetBtn = document.getElementById('dashDateReset');
+  if (!picker || !resetBtn) return;
+
+  picker.addEventListener('change', () => {
+    const val = picker.value;
+    if (val) {
+      resetBtn.style.display = '';
+      loadAdminDashboard(val);
+    }
+  });
+
+  resetBtn.addEventListener('click', () => {
+    picker.value = '';
+    resetBtn.style.display = 'none';
+    loadAdminDashboard(null);
+  });
+}
+
+injectDateFilter();
 await loadAdminDashboard();

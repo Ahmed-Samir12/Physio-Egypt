@@ -20,10 +20,10 @@ function initReveal() {
   );
 
   els.forEach((el, i) => {
-    if (!el.style.getPropertyValue('--d')) el.style.setProperty('--d', `${Math.min(360, i * 45)}ms`);
+    if (!el.style.getPropertyValue('--d'))
+      el.style.setProperty('--d', `${Math.min(360, i * 45)}ms`);
     io.observe(el);
   });
 }
 
 export { initReveal };
-

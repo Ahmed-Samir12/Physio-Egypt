@@ -9,6 +9,12 @@ block pageStyles
 
 block content
 
+  //- ── Date filter bar ────────────────────────────────────
+  .date-filter-bar
+    label(for="dashDatePicker" style="font-family:var(--font-display);font-weight:600") تصفية حسب التاريخ
+    input#dashDatePicker(type="date" class="input" style="width:auto")
+    button#dashDateReset.btn.btn-ghost.btn-sm(type="button" style="display:none") العودة لليوم
+
   //- ── Stat cards ─────────────────────────────────────────
   .grid-stats
     .card.card-pad.card-stat.card-hover.reveal(data-stat-card="todayBookings")
@@ -56,8 +62,8 @@ block content
           span.legend-dot(style="background:var(--warning)")
           span.legend-label قيد الانتظار
           span.legend-count.tnum(data-status-pending) —
-        .legend-item
-          span.legend-dot(style="background:var(--accent)")
+        .legend-item 
+          span.legend-dot(style="background:#22c55e")
           span.legend-label مؤكد
           span.legend-count.tnum(data-status-confirmed) —
         .legend-item
@@ -65,7 +71,7 @@ block content
           span.legend-label مكتمل
           span.legend-count.tnum(data-status-done) —
         .legend-item
-          span.legend-dot(style="background:#22c55e")
+          span.legend-dot(style="background:var(--accent)")
           span.legend-label مسترد
           span.legend-count.tnum(data-status-retrieval) —
         .legend-item

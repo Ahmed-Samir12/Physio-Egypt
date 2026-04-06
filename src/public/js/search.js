@@ -6,12 +6,12 @@
 import { apiFetch } from './api.js';
 
 export function initGlobalSearch() {
-  const input    = document.querySelector('[data-global-search]');
+  const input = document.querySelector('[data-global-search]');
   const dropdown = document.querySelector('[data-search-dropdown]');
   if (!input || !dropdown) return;
 
-  let timer  = null;
-  let lastQ  = '';
+  let timer = null;
+  let lastQ = '';
   let active = false;
 
   // ── DOM helpers ────────────────────────────────────────
@@ -30,7 +30,11 @@ export function initGlobalSearch() {
 
   function row(icon, label, sub, href) {
     // Escape HTML to prevent XSS in result labels
-    const esc = s => String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    const esc = (s) =>
+      String(s || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
     return `<a class="search-row" href="${esc(href)}" tabindex="0">
       <span class="search-row-icon"><i data-lucide="${icon}"></i></span>
       <span class="search-row-text">
@@ -44,11 +48,16 @@ export function initGlobalSearch() {
   // ── Main search ────────────────────────────────────────
   async function doSearch(q) {
     q = q.trim();
-    if (!q || q.length < 2) { hide(); return; }
+    if (!q || q.length < 2) {
+      hide();
+      return;
+    }
     if (q === lastQ && active) return;
     lastQ = q;
 
-    show(`<div class="search-loading"><span class="search-spin"></span> جارٍ البحث…</div>`);
+    show(
+      `<div class="search-loading"><span class="search-spin"></span> جارٍ البحث…</div>`,
+    );
 
     try {
       const [pRes, bRes] = await Promise.allSettled([
@@ -59,29 +68,36 @@ export function initGlobalSearch() {
       let html = '';
 
       // ── Patients ─────────────────────────────────────
-      const patients = (pRes.status === 'fulfilled' && pRes.value?.ok)
-        ? ((await pRes.value.json().catch(() => ({}))).data?.patients || [])
-        : [];
+      const patients =
+        pRes.status === 'fulfilled' && pRes.value?.ok
+          ? (await pRes.value.json().catch(() => ({}))).data?.patients || []
+          : [];
 
       if (patients.length) {
         html += `<div class="search-section-label">المرضى</div>`;
-        patients.forEach(p => {
-          const sub = [p.phone, p.nationality].filter(Boolean).join(' · ') || '—';
+        patients.forEach((p) => {
+          const sub =
+            [p.phone, p.nationality].filter(Boolean).join(' · ') || '—';
           html += row('user', p.name || '—', sub, `/patients/${p._id}`);
         });
       }
 
       // ── Bookings ─────────────────────────────────────
-      const bookings = (bRes.status === 'fulfilled' && bRes.value?.ok)
-        ? ((await bRes.value.json().catch(() => ({}))).data?.bookings || [])
-        : [];
+      const bookings =
+        bRes.status === 'fulfilled' && bRes.value?.ok
+          ? (await bRes.value.json().catch(() => ({}))).data?.bookings || []
+          : [];
 
       if (bookings.length) {
         html += `<div class="search-section-label">الحجوزات</div>`;
-        bookings.forEach(b => {
+        bookings.forEach((b) => {
           const pName = b.patient?.name || '—';
-          const date  = b.appointmentDate
-            ? new Date(b.appointmentDate).toLocaleDateString('ar-EG', { day:'numeric', month:'short', year:'numeric' })
+          const date = b.appointmentDate
+            ? new Date(b.appointmentDate).toLocaleDateString('ar-EG', {
+                day: 'numeric',
+                month: 'short',
+                year: 'numeric',
+              })
             : '—';
           const sub = `${date} · ${b.serviceType || '—'}`;
           html += row('calendar-check', pName, sub, `/bookings/${b._id}`);
@@ -98,7 +114,9 @@ export function initGlobalSearch() {
 
       show(html);
     } catch {
-      show(`<div class="search-empty"><i data-lucide="wifi-off"></i> تعذّر البحث</div>`);
+      show(
+        `<div class="search-empty"><i data-lucide="wifi-off"></i> تعذّر البحث</div>`,
+      );
     }
   }
 
@@ -106,7 +124,11 @@ export function initGlobalSearch() {
   input.addEventListener('input', () => {
     clearTimeout(timer);
     const q = input.value.trim();
-    if (!q) { hide(); lastQ = ''; return; }
+    if (!q) {
+      hide();
+      lastQ = '';
+      return;
+    }
     timer = setTimeout(() => doSearch(q), 380);
   });
 
@@ -116,7 +138,10 @@ export function initGlobalSearch() {
       clearTimeout(timer);
       doSearch(input.value);
     }
-    if (e.key === 'Escape') { hide(); input.blur(); }
+    if (e.key === 'Escape') {
+      hide();
+      input.blur();
+    }
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       const rows = dropdown.querySelectorAll('.search-row');
@@ -127,10 +152,19 @@ export function initGlobalSearch() {
   // Keyboard navigation inside dropdown
   dropdown.addEventListener('keydown', (e) => {
     const rows = [...dropdown.querySelectorAll('.search-row')];
-    const i    = rows.indexOf(document.activeElement);
-    if (e.key === 'ArrowDown')  { e.preventDefault(); rows[Math.min(i + 1, rows.length - 1)]?.focus(); }
-    if (e.key === 'ArrowUp')    { e.preventDefault(); i > 0 ? rows[i - 1].focus() : input.focus(); }
-    if (e.key === 'Escape')     { hide(); input.focus(); }
+    const i = rows.indexOf(document.activeElement);
+    if (e.key === 'ArrowDown') {
+      e.preventDefault();
+      rows[Math.min(i + 1, rows.length - 1)]?.focus();
+    }
+    if (e.key === 'ArrowUp') {
+      e.preventDefault();
+      i > 0 ? rows[i - 1].focus() : input.focus();
+    }
+    if (e.key === 'Escape') {
+      hide();
+      input.focus();
+    }
   });
 
   // Close when clicking outside

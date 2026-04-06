@@ -4,11 +4,11 @@ import * as bookingController from './booking.controller.js';
 
 const router = express.Router();
 
+router.use(protect);
+
 // Patient card — GET /api/v1/bookings/:id/card
 // Add ?pdf=1 to get a PDF instead of HTML
 router.get('/:id/card', bookingController.getBookingCard);
-
-router.use(protect);
 
 router
   .route('/')

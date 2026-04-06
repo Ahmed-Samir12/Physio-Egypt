@@ -34,7 +34,7 @@ function badgeForStatus(s) {
   if (s === 'pending') return 'badge badge-amber';
   if (s === 'cancelled' || s === 'canceled') return 'badge badge-red';
   if (s === 'done') return 'badge badge-blue';
-  if (s === 'retrieval') return 'badge badge-green';
+  if (s === 'retrieval') return 'badge badge-dark-blue';
   return 'badge badge-muted';
 }
 

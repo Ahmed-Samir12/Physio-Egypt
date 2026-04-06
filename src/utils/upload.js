@@ -3,6 +3,7 @@ import sharp from 'sharp';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { mkdirSync } from 'fs';
+import AppError from './AppError.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -15,7 +16,7 @@ export const uploadMemory = multer({
   limits: { fileSize: 5 * 1024 * 1024 }, // 5MB
   fileFilter: (req, file, cb) => {
     if (!file.mimetype.startsWith('image/')) {
-      return cb(new Error('يجب أن يكون الملف صورة'), false);
+      return cb(new AppError('يجب أن يكون الملف صورة', 400), false);
     }
     cb(null, true);
   },

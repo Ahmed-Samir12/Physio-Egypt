@@ -25,7 +25,7 @@ export const getEmployeeDashboard = async (employeeId, query) => {
       $match: {
         bookedBy: employeeId,
         createdAt: { $gte: start, $lte: end },
-        status: { $ne: 'cancelled' },
+        status: { $in: ['confirmed', 'done', 'retrieval'] },
       },
     },
     {
@@ -59,7 +59,7 @@ export const getEmployeeDashboard = async (employeeId, query) => {
     {
       $match: {
         bookedBy: employeeId,
-        status: { $ne: 'cancelled' },
+        status: { status: { $in: ['confirmed', 'done'] } },
       },
     },
     {

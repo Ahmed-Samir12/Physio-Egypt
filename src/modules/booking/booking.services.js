@@ -2,7 +2,7 @@ import Booking from './booking.model.js';
 import * as patientService from '../patient/patient.services.js';
 import AppError from '../../utils/AppError.js';
 import Patient from '../patient/patientModel.js';
-import { escapeRegex, todayRange } from '../../utils/utils-functions.js';
+import { escapeRegex } from '../../utils/utils-functions.js';
 /**
  * Create a booking.
  *
@@ -14,8 +14,6 @@ import { escapeRegex, todayRange } from '../../utils/utils-functions.js';
  */
 
 export const createBooking = async (bookingData, employeeId) => {
-  // Support both nested shape {patient:{...}, booking:{...}} from frontend
-  // and flat shape for backward compat
   const patientData = bookingData.patient || bookingData;
   const bookingInfo = bookingData.booking || bookingData;
 
@@ -113,8 +111,11 @@ export const getBookings = async (query, user) => {
   }
 
   if (date) {
-    const { start, end } = todayRange();
-    filter.appointmentDate = { $gte: start, $lte: end };
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    const dEnd = new Date(date);
+    dEnd.setHours(23, 59, 59, 999);
+    filter.appointmentDate = { $gte: d, $lte: dEnd };
   }
 
   if (status) filter.status = status;
@@ -214,6 +215,11 @@ export const updateBooking = async (id, data, user) => {
 
   await booking.save(); // triggers pre-save hook to recalculate remaining
 
+  if (data.status === 'confirmed' || data.status === 'done') {
+    const patient = await Patient.findById(booking.patient);
+    if (patient) await patient.resetAutoDelete();
+  }
+
   await booking.populate([
     {
       path: 'patient',
@@ -245,6 +251,7 @@ export const cancelBooking = async (id, user) => {
   }
 
   booking.status = 'cancelled';
+  booking.autoDeleteAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000);
   await booking.save();
   return booking;
 };

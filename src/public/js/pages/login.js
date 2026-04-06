@@ -19,7 +19,9 @@ document.querySelectorAll('[data-pw-toggle]').forEach((btn) => {
   btn.addEventListener('click', () => {
     // find the sibling input (closest .input-group's input)
     const group = btn.closest('.input-group');
-    const input = group?.querySelector('input[type="password"], input[type="text"]');
+    const input = group?.querySelector(
+      'input[type="password"], input[type="text"]',
+    );
     if (!input) return;
     const show = input.type === 'password';
     input.type = show ? 'text' : 'password';
@@ -62,11 +64,11 @@ function setLoading(btn, textEl, loading, label = 'Submit') {
 }
 
 // ── Sign In ───────────────────────────────────────────────
-const loginSubmit  = document.querySelector('[data-login-submit]');
+const loginSubmit = document.querySelector('[data-login-submit]');
 const loginBtnText = document.querySelector('[data-login-btn-text]');
-const loginError   = document.querySelector('[data-login-error]');
-const loginEmail   = document.querySelector('#login-email');
-const loginPw      = document.querySelector('#login-password');
+const loginError = document.querySelector('[data-login-error]');
+const loginEmail = document.querySelector('#login-email');
+const loginPw = document.querySelector('#login-password');
 
 loginSubmit?.addEventListener('click', async () => {
   setMsg(loginError, null);
@@ -87,26 +89,29 @@ loginSubmit?.addEventListener('click', async () => {
 
 // Allow Enter key on login fields
 [loginEmail, loginPw].forEach((el) =>
-  el?.addEventListener('keydown', (e) => e.key === 'Enter' && loginSubmit?.click()),
+  el?.addEventListener(
+    'keydown',
+    (e) => e.key === 'Enter' && loginSubmit?.click(),
+  ),
 );
 
 // ── Register ──────────────────────────────────────────────
-const regSubmit  = document.querySelector('[data-reg-submit]');
+const regSubmit = document.querySelector('[data-reg-submit]');
 const regBtnText = document.querySelector('[data-reg-btn-text]');
-const regError   = document.querySelector('[data-reg-error]');
+const regError = document.querySelector('[data-reg-error]');
 const regSuccess = document.querySelector('[data-reg-success]');
-const regName    = document.querySelector('#reg-name');
-const regEmail   = document.querySelector('#reg-email');
-const regPw      = document.querySelector('#reg-password');
+const regName = document.querySelector('#reg-name');
+const regEmail = document.querySelector('#reg-email');
+const regPw = document.querySelector('#reg-password');
 const regPwConfirm = document.querySelector('#reg-password-confirm');
 
 regSubmit?.addEventListener('click', async () => {
   setMsg(regError, null);
   setMsg(regSuccess, null);
 
-  const name            = regName?.value.trim();
-  const email           = regEmail?.value.trim();
-  const password        = regPw?.value;
+  const name = regName?.value.trim();
+  const email = regEmail?.value.trim();
+  const password = regPw?.value;
   const passwordConfirm = regPwConfirm?.value;
 
   if (!name || !email || !password || !passwordConfirm) {
@@ -134,8 +139,16 @@ regSubmit?.addEventListener('click', async () => {
     if (!res.ok) {
       setMsg(regError, data?.message || 'فشل إنشاء الحساب. حاول مرة أخرى.');
     } else {
-      setMsg(regSuccess, '✓ تم إنشاء الحساب! تحقق من بريدك الإلكتروني لتفعيل الحساب.', false);
-      showAlert('success', 'Check your inbox to verify your email before signing in.', { title: 'تم إنشاء الحساب!' });
+      setMsg(
+        regSuccess,
+        '✓ تم إنشاء الحساب! تحقق من بريدك الإلكتروني لتفعيل الحساب.',
+        false,
+      );
+      showAlert(
+        'success',
+        'Check your inbox to verify your email before signing in.',
+        { title: 'تم إنشاء الحساب!' },
+      );
       regName.value = '';
       regEmail.value = '';
       regPw.value = '';
@@ -149,11 +162,11 @@ regSubmit?.addEventListener('click', async () => {
 });
 
 // ── Forgot Password ───────────────────────────────────────
-const forgotSubmit  = document.querySelector('[data-forgot-submit]');
+const forgotSubmit = document.querySelector('[data-forgot-submit]');
 const forgotBtnText = document.querySelector('[data-forgot-btn-text]');
-const forgotError   = document.querySelector('[data-forgot-error]');
+const forgotError = document.querySelector('[data-forgot-error]');
 const forgotSuccess = document.querySelector('[data-forgot-success]');
-const forgotEmail   = document.querySelector('#forgot-email');
+const forgotEmail = document.querySelector('#forgot-email');
 
 forgotSubmit?.addEventListener('click', async () => {
   setMsg(forgotError, null);
@@ -175,10 +188,19 @@ forgotSubmit?.addEventListener('click', async () => {
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      setMsg(forgotError, data?.message || 'تعذّر إرسال بريد الاسترداد. حاول مرة أخرى.');
+      setMsg(
+        forgotError,
+        data?.message || 'تعذّر إرسال بريد الاسترداد. حاول مرة أخرى.',
+      );
     } else {
-      setMsg(forgotSuccess, '✓ تم إرسال رابط الاسترداد! تحقق من صندوق الوارد.', false);
-      showAlert('info', 'إذا كان البريد مسجلاً، ستصلك رسالة استرداد قريباً.', { title: 'تم إرسال البريد' });
+      setMsg(
+        forgotSuccess,
+        '✓ تم إرسال رابط الاسترداد! تحقق من صندوق الوارد.',
+        false,
+      );
+      showAlert('info', 'إذا كان البريد مسجلاً، ستصلك رسالة استرداد قريباً.', {
+        title: 'تم إرسال البريد',
+      });
       forgotEmail.value = '';
     }
   } catch {

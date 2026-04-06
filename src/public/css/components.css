@@ -230,6 +230,13 @@
   background: rgba(14, 165, 233, 0.08);
   color: #0284c7;
 }
+
+.badge-dark-blue {
+  border-color: rgba(34, 197, 94, 0.3);
+  background: rgba(34, 197, 94, 0.08);
+  color: #003953;
+}
+
 .badge-muted {
   border-color: var(--border);
   background: var(--bg-raised);

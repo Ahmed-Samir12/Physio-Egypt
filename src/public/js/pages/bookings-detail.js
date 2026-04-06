@@ -83,43 +83,42 @@ function buildWhatsAppText(patient, booking) {
   );
 
   const statusMap = {
-    confirmed: 'مؤكد ✅',
-    pending: 'قيد الانتظار ⏳',
-    done: 'مكتمل ✔️',
-    cancelled: 'ملغى ❌',
-    retrieval: 'مسترد 💚',
+    confirmed: 'مؤكد',
+    pending: 'قيد الانتظار',
+    done: 'مكتمل',
+    cancelled: 'ملغى',
+    retrieval: 'مسترد',
   };
 
   const lines = [
-    `🏥 *فيزيو إيجيبت*`,
+    ` *فيزيو إيجيبت*`,
     `خدمات العلاج الطبيعي المنزلي`,
-    `📞 01106500395`,
+    ` 01106500395`,
     ``,
     `━━━━━━━━━━━━━━━━━━`,
-    `🗓️ *تفاصيل الموعد*`,
+    ` *تفاصيل الموعد*`,
     `━━━━━━━━━━━━━━━━━━`,
-    `👤 المريض: *${patient.name || '—'}*`,
-    `📱 الهاتف: ${patient.phone || '—'}`,
+    ` المريض: *${patient.name || '—'}*`,
+    ` الهاتف: ${patient.phone || '—'}`,
     `الشكوي: ${patient.complaint || '—'}`,
   ];
 
-  if (patient.nationality) lines.push(`🌍 الجنسية: ${patient.nationality}`);
-  if (booking.companion) lines.push(`👥 المرافق: ${booking.companion}`);
+  if (patient.nationality) lines.push(` الجنسية: ${patient.nationality}`);
+  if (booking.companion) lines.push(` المرافق: ${booking.companion}`);
 
   lines.push(
     ``,
-    `📅 التاريخ: *${date}*`,
-    `⏰ الوقت: *${booking.appointmentTime || '—'}*`,
-    `🩺 الخدمة: *${booking.serviceType || '—'}*`,
-    `📋 الحالة: ${statusMap[booking.status] || booking.status || '—'}`,
+    ` التاريخ: *${date}*`,
+    ` الوقت: *${booking.appointmentTime || '—'}*`,
+    ` الخدمة: *${booking.serviceType || '—'}*`,
+    ` الحالة: ${statusMap[booking.status] || booking.status || '—'}`,
     ``,
-    `💰 *بيانات الدفع*`,
+    ` *بيانات الدفع*`,
     `إجمالي السعر: ${booking.totalPrice ?? 0} جنيه`,
     `المدفوع (عربون): ${booking.deposit ?? 0} جنيه`,
     `المتبقي: *${remaining} جنيه*`,
     ``,
     `━━━━━━━━━━━━━━━━━━`,
-    `يرجى التواجد في العنوان في الموعد المحدد 🙏`,
     `سيتواصل معك المعالج قبل الوصول`,
   );
 
@@ -151,7 +150,24 @@ async function load() {
             : p?.gender || '—';
     if (els.pAge) els.pAge.textContent = p?.age != null ? `${p.age} سنة` : '—';
 
-    if (els.pId) els.pId.textContent = p?.patientId || '—';
+    if (els.pId) {
+      const pid = p?.patientId;
+      if (pid) {
+        els.pId.textContent = `📋 ${pid}`;
+        els.pId.style.cursor = 'pointer';
+        els.pId.title = 'انقر لنسخ رقم المريض';
+        els.pId.addEventListener('click', async () => {
+          try {
+            await navigator.clipboard.writeText(pid);
+            showAlert('success', `تم نسخ ${pid}`);
+          } catch {
+            showAlert('error', 'فشل النسخ');
+          }
+        });
+      } else {
+        els.pId.textContent = '—';
+      }
+    }
 
     // Nationality badge
     const nationality = p?.nationality || '';
@@ -313,40 +329,21 @@ els.cancelBtn?.addEventListener('click', () => {
   });
 });
 
-// ── Preview card ──────────────────────────────────────────
-els.printCard?.addEventListener('click', () => {
+// ── Download card as PDF (client-side via browser print) ──
+els.downloadCard?.addEventListener('click', () => {
+  showAlert('info', 'ستفتح نافذة الطباعة — اختر "حفظ كـ PDF"', {
+    title: 'تنزيل PDF',
+  });
+
   window.open(
-    `/api/v1/bookings/${encodeURIComponent(bookingId)}/card`,
-    '_blank',
-    'width=500,height=720,scrollbars=yes',
+    `/api/v1/bookings/${encodeURIComponent(bookingId)}/card?print=1`,
+    'width=520,height=780,scrollbars=no',
   );
 });
 
-// ── Print card ────────────────────────────────────────────
-els.downloadCard?.addEventListener('click', async () => {
-  showAlert('info', 'جارٍ تحضير بطاقة المريض…', { title: 'تنزيل PDF' });
-  try {
-    const res = await fetch(
-      `/api/v1/bookings/${encodeURIComponent(bookingId)}/card?pdf=1`,
-    );
-    if (!res.ok) throw new Error('فشل تحميل PDF');
-    const blob = await res.blob();
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `patient-card-${bookingId}.pdf`;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(() => URL.revokeObjectURL(url), 5000);
-    showAlert('success', 'تم تنزيل بطاقة المريض PDF.', { title: 'تم التنزيل' });
-  } catch (e) {
-    showAlert('error', e?.message || 'فشل تنزيل PDF.', { title: 'خطأ' });
-  }
-});
-
 // ── Share card via WhatsApp ───────────────────────────────
-els.shareCardWa?.addEventListener('click', async () => {
+
+els.shareCardWa?.addEventListener('click', () => {
   if (!_patient || !_booking) {
     showAlert('error', 'البيانات لم تُحمَّل بعد. انتظر قليلاً.', {
       title: 'خطأ',
@@ -354,39 +351,16 @@ els.shareCardWa?.addEventListener('click', async () => {
     return;
   }
 
-  // Download PDF first
-  try {
-    const res = await fetch(
-      `/api/v1/bookings/${encodeURIComponent(bookingId)}/card?pdf=1`,
-    );
-    if (res.ok) {
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `patient-card-${bookingId}.pdf`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      setTimeout(() => URL.revokeObjectURL(url), 5000);
-    }
-  } catch {
-    /* non-blocking */
-  }
-
   const waNum = (_patient.whatsappNumber || _patient.phone || '').replace(
     /\D/g,
     '',
   );
   const text = buildWhatsAppText(_patient, _booking);
-  const encodedText = encodeURIComponent(text);
   const url = waNum
-    ? `https://wa.me/${waNum}?text=${encodedText}`
-    : `https://wa.me/?text=${encodedText}`;
+    ? `https://wa.me/${waNum}?text=${encodeURIComponent(text)}`
+    : `https://wa.me/?text=${encodeURIComponent(text)}`;
+
   window.open(url, '_blank', 'noopener,noreferrer');
-  showAlert('info', 'شارك الرسالة ثم أرفق البطاقة يدوياً (تم تنزيل PDF).', {
-    title: 'مشاركة عبر واتساب',
-  });
 });
 
 await load();

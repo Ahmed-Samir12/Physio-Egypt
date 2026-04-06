@@ -23,9 +23,14 @@ block content
           .patient-meta(style="margin-top:.5rem")
             span.badge.badge-muted(data-gender) —
             span.badge.badge-muted(data-age) —
-      a.btn.btn-primary(href="/bookings/new")
-        i(data-lucide="calendar-plus")
-        | حجز جديد
+            span.badge.badge-muted.hidden(data-patient-id) —
+      .btn-group(style="display:flex;gap:.5rem;flex-wrap:wrap")
+        a.btn.btn-primary(href="/bookings/new")
+          i(data-lucide="calendar-plus")
+          | حجز جديد
+        button.btn.btn-danger.hidden(type="button", data-delete-patient-btn)
+          i(data-lucide="trash-2")
+          | حذف المريض
 
     .info-grid.info-grid-4
       .card.card-pad(style="box-shadow:none;border-color:var(--border)")
