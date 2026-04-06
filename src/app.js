@@ -45,6 +45,26 @@ app.use(
   }),
 );
 
+const sanitizeObj = (obj) => {
+  if (!obj || typeof obj !== 'object') return;
+  for (const key of Object.keys(obj)) {
+    const cleanKey = key.replace(/^\$/, '_').replace(/\./g, '_');
+    const val = obj[key];
+    if (cleanKey !== key) {
+      obj[cleanKey] = val;
+      delete obj[key];
+    }
+    if (val && typeof val === 'object') sanitizeObj(val);
+  }
+};
+
+app.use((req, _res, next) => {
+  sanitizeObj(req.body);
+  sanitizeObj(req.params);
+  sanitizeObj(req.query); // mutates in place — no reassignment needed
+  next();
+});
+
 // ── CORS ──────────────────────────────────────────────────
 app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 
