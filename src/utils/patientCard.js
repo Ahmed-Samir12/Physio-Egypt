@@ -16,7 +16,12 @@ const CLINIC = {
     'خدمات العلاج الطبيعي المنزلي · جميع محافظات مصر',
 };
 
-export const buildCardHTML = ({ patient, booking }) => {
+export const buildCardHTML = ({
+  patient,
+  booking,
+  nonce = '',
+  autoPrint = false,
+}) => {
   try {
     const logoPath = path.join(__dirname, '../public/images/icon.jpeg');
     logoBase64 = `data:image/jpeg;base64,${readFileSync(logoPath).toString('base64')}`;
@@ -133,12 +138,12 @@ export const buildCardHTML = ({ patient, booking }) => {
     align-items:center; margin-bottom:8px;
     gap:8px;
   }
-  .field-label { font-size:13px; color:#64748b; white-space:nowrap; }
-  .field-value { font-size:13px; color:#0f172a; font-weight:600; text-align:left; }
+  .field-label { font-size:15px; color:#64748b; white-space:nowrap; }
+  .field-value { font-size:15px; color:#0f172a; font-weight:600; text-align:left; }
   .divider { border:none; border-top:1px solid #f1f5f9; margin:14px 0; }
   .badge {
-    display:inline-block; padding:3px 11px;
-    border-radius:999px; font-size:12px; font-weight:700;
+    display:inline-block; padding:6px 11px;
+    border-radius:999px; font-size:17px; font-weight:700;
   }
   /* ── Payment rows ── */
   .amount-row {
@@ -175,14 +180,25 @@ export const buildCardHTML = ({ patient, booking }) => {
     background:linear-gradient(135deg,#0ea5e9,#6366f1);
     height:4px;
   }
+  @page {
+    size: A5 portrait;
+    margin: 10mm;
+  }
   @media print {
     body { background:#fff; padding:0; }
     .card { border:none; border-radius:0; width:100%; box-shadow:none; }
-    .print-btn { display:none; }
+    .print-btn { display:none !important; }
   }
 </style>
 </head>
 <body>
+<script nonce="${nonce}">
+  document.addEventListener('DOMContentLoaded', function() {
+    var btn = document.getElementById('print-btn');
+    if (btn) btn.addEventListener('click', function() { window.print(); });
+    ${autoPrint ? `setTimeout(function() { window.print(); }, 800);` : ''}
+  });
+</script>
 <div class="card">
   <div class="card-watermark"></div>
   <div class="card-header">
@@ -283,13 +299,11 @@ export const buildCardHTML = ({ patient, booking }) => {
   </div>
 
   <div class="card-footer">
-    <div>يرجى التواجد في العنوان في الموعد المحدد</div>
-    <div>سيتواصل معك المعالج قبل الوصول</div>
     <div class="booking-ref">Booking #${booking._id}</div>
     <div style="margin-top:2px;font-size:11px">
       ${new Date().toLocaleString('ar-EG')}
     </div>
-    <button class="print-btn" onclick="window.print()">🖨️ طباعة البطاقة</button>
+    <button class="print-btn" id="print-btn">🖨️ طباعة البطاقة</button>
   </div>
 </div>
 </body>

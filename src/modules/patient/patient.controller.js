@@ -7,13 +7,14 @@ export const getAllPatients = async (req, res) => {
 };
 
 export const getPatient = async (req, res) => {
-  // Fetch patient + their booking history in parallel
   const [patient, bookings] = await Promise.all([
     patientService.getPatientById(req.params.id),
     Booking.find({ patient: req.params.id })
       .sort({ appointmentDate: -1 })
       .limit(50)
-      .select('serviceType appointmentDate appointmentTime status paymentStatus totalPrice deposit companion')
+      .select(
+        'serviceType appointmentDate appointmentTime status paymentStatus totalPrice deposit companion',
+      )
       .lean(),
   ]);
 
@@ -26,4 +27,9 @@ export const getPatient = async (req, res) => {
 export const updatePatient = async (req, res) => {
   const patient = await patientService.updatePatient(req.params.id, req.body);
   res.status(200).json({ status: 'success', data: { patient } });
+};
+
+export const deletePatient = async (req, res) => {
+  await patientService.deletePatient(req.params.id);
+  res.status(204).send();
 };

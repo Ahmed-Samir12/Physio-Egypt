@@ -1,4 +1,5 @@
 import Patient from './patientModel.js';
+import Booking from '../booking/booking.model.js';
 import AppError from '../../utils/AppError.js';
 import { escapeRegex } from '../../utils/utils-functions.js';
 
@@ -6,7 +7,6 @@ import { escapeRegex } from '../../utils/utils-functions.js';
  * Core logic: find existing patient by phone or create a new one.
  * Returns { patient, isNew }.
  */
-
 export const findOrCreateByPhone = async (patientData, createdBy) => {
   const {
     phone,
@@ -24,10 +24,7 @@ export const findOrCreateByPhone = async (patientData, createdBy) => {
   let isNew = false;
 
   if (!patient) {
-    // Validate required fields for a new patient
-    if (!name) {
-      throw new AppError('Name is required for a new patient.', 400);
-    }
+    if (!name) throw new AppError('Name is required for a new patient.', 400);
     patient = await Patient.create({
       phone,
       name,
@@ -40,10 +37,8 @@ export const findOrCreateByPhone = async (patientData, createdBy) => {
       complaint: complaint || '',
       whatsappNumber: whatsappNumber || '',
     });
-
     isNew = true;
   } else {
-    // Update mutable fields on existing patient (complaint can change per booking)
     const updates = {};
     if (complaint !== undefined) updates.complaint = complaint;
     if (whatsappNumber !== undefined) updates.whatsappNumber = whatsappNumber;
@@ -57,14 +52,19 @@ export const findOrCreateByPhone = async (patientData, createdBy) => {
 };
 
 /**
- * List all patients (admin + employee).
+ * List patients who have at least one confirmed booking.
  */
-
 export const getAllPatients = async (query) => {
   const { search, page = 1, limit = 10 } = query;
   const skip = (page - 1) * limit;
 
-  const filter = {};
+  // Only show patients with at least one confirmed booking
+  const confirmedPatientIds = await Booking.distinct('patient', {
+    status: 'confirmed',
+  });
+
+  const filter = { _id: { $in: confirmedPatientIds } };
+
   if (search) {
     filter.$or = [
       { name: { $regex: escapeRegex(search), $options: 'i' } },
@@ -89,7 +89,6 @@ export const getAllPatients = async (query) => {
 /**
  * Get a single patient by ID, with their booking history.
  */
-
 export const getPatientById = async (id) => {
   const patient = await Patient.findById(id);
   if (!patient) throw new AppError('No patient found with that ID.', 404);
@@ -99,17 +98,21 @@ export const getPatientById = async (id) => {
 /**
  * Update patient info.
  */
-
 export const updatePatient = async (id, data) => {
-  // Phone changes go through findOrCreate, not direct update
   const { phone, ...safeData } = data;
-
   const patient = await Patient.findByIdAndUpdate(id, safeData, {
     new: true,
     runValidators: true,
   });
-
   if (!patient) throw new AppError('No patient found with that ID.', 404);
+  return patient;
+};
 
+/**
+ * Hard-delete a patient record.
+ */
+export const deletePatient = async (id) => {
+  const patient = await Patient.findByIdAndDelete(id);
+  if (!patient) throw new AppError('No patient found with that ID.', 404);
   return patient;
 };

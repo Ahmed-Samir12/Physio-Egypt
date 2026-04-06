@@ -15,6 +15,7 @@ router.post('/resend-verification', authcontroller.resendVerification);
 
 // refresh token
 router.post('/refresh', authcontroller.refresh);
+router.get('/refresh-page', authcontroller.refreshPage);
 router.delete('/logout', authcontroller.logout);
 router.delete('/logout-all', protect, authcontroller.logoutAll);
 router.post('/forgetPassword', authcontroller.forgotPassword);

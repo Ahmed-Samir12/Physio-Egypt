@@ -12,18 +12,29 @@ export const signAccessToken = (user) => {
   );
 };
 
-export const removeCookie = (res) => {
-  res.clearCookie('refreshToken', { path: '/api/v1/auth' });
-};
+export const setCookie = (accessToken, refreshToken, expiresAt, res) => {
+  // Access token — short-lived, sent everywhere
+  res.cookie('accessToken', accessToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    maxAge: 15 * 60 * 1000,
+    path: '/',
+  });
 
-export const setCookie = (token, expiresAt, res) => {
-  res.cookie('refreshToken', token, {
+  // Refresh token — long-lived, locked to auth endpoints only
+  res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'strict',
     expires: expiresAt,
     path: '/api/v1/auth',
   });
+};
+
+export const removeCookie = (res) => {
+  res.clearCookie('accessToken', { path: '/' });
+  res.clearCookie('refreshToken', { path: '/api/v1/auth' });
 };
 
 export const sendTokens = async (user, statusCode, req, res) => {
@@ -33,7 +44,7 @@ export const sendTokens = async (user, statusCode, req, res) => {
     req.get('user-agent'),
   );
 
-  setCookie(refreshToken, expiresAt, res);
+  setCookie(accessToken, refreshToken, expiresAt, res);
 
   // remove password from responce
   user.password = undefined;
@@ -41,7 +52,6 @@ export const sendTokens = async (user, statusCode, req, res) => {
 
   res.status(statusCode).json({
     status: 'success',
-    accessToken,
     data: {
       user,
     },

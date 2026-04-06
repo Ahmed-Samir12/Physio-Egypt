@@ -10,13 +10,17 @@ block pageStyles
 block content
 
   //- ── Employee info card ──────────────────────────────────
-  .card.card-pad.reveal(style="margin-bottom:1.5rem;display:flex;gap:1rem;align-items:center")
-    .stat-icon-wrap.stat-icon-blue(style="width:56px;height:56px;flex-shrink:0")
-      i(data-lucide="user-circle")
-    div
-      h2.patient-name(data-emp-name style="margin:0") —
-      p.secondary(data-emp-email style="margin:.2rem 0 0") —
-      span.badge.badge-muted(data-emp-role style="margin-top:.4rem") —
+  .card.card-pad.reveal(style="margin-bottom:1.5rem;display:flex;gap:1rem;align-items:center;justify-content:space-between")
+    .row(style="display:flex;gap:1rem;align-items:center")
+      .stat-icon-wrap.stat-icon-blue(style="width:56px;height:56px;flex-shrink:0")
+        i(data-lucide="user-circle")
+      div
+        h2.patient-name(data-emp-name style="margin:0") —
+        p.secondary(data-emp-email style="margin:.2rem 0 0") —
+        span.badge.badge-muted(data-emp-role style="margin-top:.4rem") —
+    button.btn.btn-ghost.btn-sm(type="button", data-export-employee-pdf, title="تصدير PDF")
+      i(data-lucide="file-down")
+      | تصدير PDF
 
   //- ── Summary stat cards ───────────────────────────────────
   .grid-stats(style="margin-bottom:1.5rem")
@@ -44,6 +48,13 @@ block content
         input.input(type="date", data-from, style="width:auto")
         span.secondary إلى
         input.input(type="date", data-to, style="width:auto")
+        select.input(data-status-filter, style="width:auto")
+          option(value="") كل الحالات
+          option(value="confirmed") مؤكد
+          option(value="pending") قيد الانتظار
+          option(value="done") مكتمل
+          option(value="cancelled") ملغى
+          option(value="retrieval") مسترد
         button.btn.btn-primary.btn-sm(type="button", data-filter-btn)
           i(data-lucide="search")
           | بحث

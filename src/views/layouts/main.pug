@@ -120,6 +120,30 @@ html(lang="en")
       import { requireAuth, wireGlobalAuthUI } from '/js/auth.js';
       import { initGlobalSearch } from '/js/search.js';
 
+      // Active-session keep-alive: refresh the access token 1 min before
+      // it expires (access token TTL is 15 min → fire every 14 min).
+      // This means users actively using the app are never bounced to /login.
+      // The server-side /api/v1/auth/refresh-page redirect handles the case
+      // where a user returns after being idle for more than 15 minutes.
+      (function startTokenKeepalive() {
+        const INTERVAL_MS = 14 * 60 * 1000; // 14 minutes
+        async function silentRefresh() {
+          try {
+            const r = await fetch('/api/v1/auth/refresh', {
+              method: 'POST',
+              credentials: 'include',
+            });
+            // If the refresh token itself is expired, redirect to login
+            if (r.status === 401 || r.status === 403) {
+              window.location.href = '/login';
+            }
+          } catch {
+            // Network error — keep the interval running, don't log out
+          }
+        }
+        setInterval(silentRefresh, INTERVAL_MS);
+      })();
+
       window.lucide?.createIcons?.({ attrs: { 'stroke-width': 1.8 } });
       initSidebar();
       initReveal();

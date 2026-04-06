@@ -1,12 +1,21 @@
-import { apiFetch, clearAccessToken, logout } from './api.js';
+import { apiFetch, logout } from './api.js';
 import { showAlert } from './alert.js';
 
+let _mePromise = null;
+
 async function getMe() {
-  const res = await apiFetch('/auth/me', { method: 'GET' });
-  if (!res) return null;
-  if (!res.ok) return null;
-  const data = await res.json().catch(() => null);
-  return data;
+  if (_mePromise) return _mePromise;
+
+  _mePromise = (async () => {
+    const res = await apiFetch('/auth/me', { method: 'GET' });
+    if (!res) return null;
+    // 429 = rate limited, not an auth failure — return a special marker
+    if (res.status === 429) return '__rate_limited__';
+    if (!res.ok) return null;
+    return res.json().catch(() => null);
+  })();
+
+  return _mePromise;
 }
 
 function setUserUI(me) {
@@ -61,11 +70,20 @@ function setUserUI(me) {
 async function requireAuth({ allowRoles = null, redirectTo = '/login' } = {}) {
   try {
     const me = await getMe();
+
+    // Rate limited — stay on the page, don't redirect anywhere
+    if (me === '__rate_limited__') {
+      showAlert('error', 'الطلبات كثيرة جداً، انتظر قليلاً ثم حدّث الصفحة.', {
+        title: 'تم تجاوز الحد',
+      });
+      return null;
+    }
+
     if (!me) {
-      clearAccessToken();
       window.location.href = redirectTo;
       return null;
     }
+
     setUserUI(me);
     const role = me?.data?.user?.role || me?.user?.role || me?.role || null;
     if (allowRoles && role && !allowRoles.includes(role)) {
@@ -77,7 +95,6 @@ async function requireAuth({ allowRoles = null, redirectTo = '/login' } = {}) {
     }
     return me;
   } catch {
-    clearAccessToken();
     window.location.href = redirectTo;
     return null;
   }

@@ -48,6 +48,48 @@ export const login = async (req, res) => {
   await sendTokens(user, 200, req, res);
 };
 
+/**
+ * Server-side page refresh redirect.
+ *
+ * Called by protectPage when the accessToken is missing/expired.
+ * Because this route lives under /api/v1/auth/, the browser sends
+ * the refreshToken cookie (path restriction is satisfied).
+ *
+ * Flow: validate refresh token → rotate → set new cookies → redirect back.
+ * If anything fails → redirect to /login.
+ */
+
+export const refreshPage = async (req, res) => {
+  // Sanitise the returnTo path — only allow same-origin paths
+  const raw = req.query?.returnTo || '/dashboard';
+  const returnTo =
+    typeof raw === 'string' && raw.startsWith('/') && !raw.startsWith('//')
+      ? raw
+      : '/dashboard';
+
+  try {
+    const { user, storedToken } = await authServices.refresh(
+      req.cookies.refreshToken,
+    );
+
+    const { newAccessToken, newRefreshToken, expiresAt } =
+      await tokenServices.rotateRefreshToken(
+        storedToken,
+        user,
+        req.ip,
+        req.get('user-agent'),
+      );
+
+    removeCookie(res);
+    setCookie(newAccessToken, newRefreshToken, expiresAt, res);
+
+    return res.redirect(returnTo);
+  } catch {
+    removeCookie(res);
+    return res.redirect('/login');
+  }
+};
+
 export const refresh = async (req, res) => {
   // get refresh token and check it
   const { user, storedToken } = await authServices.refresh(
@@ -65,11 +107,10 @@ export const refresh = async (req, res) => {
 
   removeCookie(res);
 
-  setCookie(newRefreshToken, expiresAt, res);
+  setCookie(newAccessToken, newRefreshToken, expiresAt, res);
 
   res.status(200).json({
     status: 'success',
-    accessToken: newAccessToken,
   });
 };
 
@@ -170,9 +211,14 @@ export const updateMe = async (req, res) => {
     }
 
     updates.photo = await processAvatar(req.file.buffer, req.user.id);
-  } else if (req.body?.photo !== undefined) {
-    // Back-compat: old JSON body with base64/URL string
-    updates.photo = req.body.photo;
+  } else if (typeof req.body?.photo === 'string') {
+    const photo = req.body.photo.trim();
+
+    if (photo === '' || /^\/uploads\/avatars\/[\w.-]+$/.test(photo)) {
+      updates.photo = photo;
+    } else {
+      throw new AppError('Invalid photo path.', 400);
+    }
   }
 
   const user = await User.findByIdAndUpdate(req.user.id, updates, {

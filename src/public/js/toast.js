@@ -33,7 +33,9 @@ function showToast(message, type = 'info', title = null) {
   const content = document.createElement('div');
   const t = document.createElement('div');
   t.className = 'title';
-  t.textContent = title || (type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Notice');
+  t.textContent =
+    title ||
+    (type === 'success' ? 'Success' : type === 'error' ? 'Error' : 'Notice');
 
   const msg = document.createElement('div');
   msg.className = 'msg';
@@ -70,4 +72,3 @@ function showToast(message, type = 'info', title = null) {
 }
 
 export { showToast };
-

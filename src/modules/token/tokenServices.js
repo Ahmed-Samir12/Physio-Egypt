@@ -20,7 +20,7 @@ export const createToken = async (user, ip, userAgent) => {
   const refreshToken = generateRefreshToken();
   const tokenHash = hashToken(refreshToken);
   const familyId = generateFamilyId();
-  const expiresAt = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   // 2) store refresh token in DB
   await RefreshToken.create({
@@ -58,7 +58,7 @@ export const rotateRefreshToken = async (storedToken, user, ip, userAgent) => {
   storedToken.replacedByTokenHash = newRefreshTokenHash;
 
   await storedToken.save();
-  const expiresAt = new Date(Date.now() + 1 * 24 * 60 * 60 * 1000);
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
   await RefreshToken.create({
     user: user._id,

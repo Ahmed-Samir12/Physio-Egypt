@@ -1,4 +1,4 @@
-import { apiFetch, getAccessToken, logout } from '../api.js';
+import { apiFetch, logout } from '../api.js';
 import { showAlert } from '../alert.js';
 import { requireAuth } from '../auth.js';
 
@@ -40,6 +40,7 @@ function populate(u) {
   if (emailInput) emailInput.value = u.email || '';
   if (roleInput) roleInput.value = u.role || 'employee';
 }
+
 populate(user);
 
 // ── Photo upload ──────────────────────────────────────────
@@ -51,10 +52,12 @@ photoTrigger?.addEventListener('click', () => photoInput?.click());
 photoInput?.addEventListener('change', async () => {
   const file = photoInput.files?.[0];
   if (!file) return;
+
   if (file.size > 5 * 1024 * 1024) {
     showAlert('error', 'حجم الصورة يجب أن يكون أقل من 5 ميجابايت.', {
       title: 'خطأ',
     });
+
     return;
   }
 
@@ -71,11 +74,9 @@ photoInput?.addEventListener('change', async () => {
     const formData = new FormData();
     formData.append('photo', file);
 
-    const token = getAccessToken();
     const res = await fetch('/api/v1/auth/me', {
       method: 'PATCH',
       credentials: 'include',
-      headers: token ? { Authorization: `Bearer ${token}` } : {},
       body: formData, // DO NOT set Content-Type header manually
     });
 
@@ -108,10 +109,12 @@ photoInput?.addEventListener('change', async () => {
     }
 
     // Update global avatars in layout (sidebar + topbar dropdown)
-    document.querySelectorAll('[data-user-avatar],[data-user-avatar2]').forEach((el) => {
-      if (!photoUrl) return;
-      el.innerHTML = `<img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`;
-    });
+    document
+      .querySelectorAll('[data-user-avatar],[data-user-avatar2]')
+      .forEach((el) => {
+        if (!photoUrl) return;
+        el.innerHTML = `<img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;">`;
+      });
 
     showAlert('success', 'تم تحديث صورة الملف الشخصي.', {
       title: 'تم التحديث',

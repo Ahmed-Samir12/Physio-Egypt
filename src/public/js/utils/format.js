@@ -1,6 +1,16 @@
-const dtf = new Intl.DateTimeFormat('en-EG', { year: 'numeric', month: 'short', day: '2-digit' });
-const ttf = new Intl.DateTimeFormat('en-EG', { hour: '2-digit', minute: '2-digit' });
-const ctf = new Intl.NumberFormat('en-EG', { style: 'currency', currency: 'EGP' });
+const dtf = new Intl.DateTimeFormat('en-EG', {
+  year: 'numeric',
+  month: 'short',
+  day: '2-digit',
+});
+const ttf = new Intl.DateTimeFormat('en-EG', {
+  hour: '2-digit',
+  minute: '2-digit',
+});
+const ctf = new Intl.NumberFormat('en-EG', {
+  style: 'currency',
+  currency: 'EGP',
+});
 
 function fmtDate(value) {
   const d = value ? new Date(value) : null;
@@ -52,4 +62,3 @@ async function copyText(text) {
 }
 
 export { fmtDate, fmtTime, fmtCurrency, debounce, hashColor, copyText };
-

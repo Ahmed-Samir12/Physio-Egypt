@@ -1,12 +1,23 @@
 import { showAlert } from '../alert.js';
 
 function getFocusable(root) {
-  return [...root.querySelectorAll('a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])')].filter(
+  return [
+    ...root.querySelectorAll(
+      'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])',
+    ),
+  ].filter(
     (el) => !el.classList.contains('hidden') && !el.hasAttribute('aria-hidden'),
   );
 }
 
-function openModal({ title, body, confirmText = 'Confirm', cancelText = 'Cancel', danger = false, onConfirm } = {}) {
+function openModal({
+  title,
+  body,
+  confirmText = 'Confirm',
+  cancelText = 'Cancel',
+  danger = false,
+  onConfirm,
+} = {}) {
   const backdrop = document.createElement('div');
   backdrop.className = 'modal-backdrop';
   backdrop.setAttribute('role', 'dialog');
@@ -54,7 +65,8 @@ function openModal({ title, body, confirmText = 'Confirm', cancelText = 'Cancel'
   backdrop.appendChild(modal);
   document.body.appendChild(backdrop);
 
-  if (window.lucide?.createIcons) window.lucide.createIcons({ attrs: { 'stroke-width': 1.8 } });
+  if (window.lucide?.createIcons)
+    window.lucide.createIcons({ attrs: { 'stroke-width': 1.8 } });
 
   const prevActive = document.activeElement;
 
@@ -98,7 +110,9 @@ function openModal({ title, body, confirmText = 'Confirm', cancelText = 'Cancel'
     } catch (err) {
       confirm.disabled = false;
       confirm.classList.remove('btn--loading');
-      showAlert('error', err?.message || 'فشل الإجراء', { title: 'فشل الإجراء' });
+      showAlert('error', err?.message || 'فشل الإجراء', {
+        title: 'فشل الإجراء',
+      });
     }
   });
 
@@ -112,4 +126,3 @@ function openModal({ title, body, confirmText = 'Confirm', cancelText = 'Cancel'
 }
 
 export { openModal };
-

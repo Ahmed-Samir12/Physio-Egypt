@@ -12,205 +12,23 @@ import { todayRange } from '../../utils/utils-functions.js';
  *  - Employee performance (bookings per user)
  */
 
-// export const getAdminDashboard = async (query) => {
-//   const { date, page = 1, limit = 10 } = query;
-//   const { start, end } = todayRange();
-
-//   const [
-//     [todayStats],
-//     employeePerformance,
-//     statusBreakdown,
-//     [allTimeStats],
-//     [retrievalStats],
-//     [bookings, totalBookings],
-//   ] = await Promise.all([
-//     Booking.aggregate([
-//       {
-//         $match: {
-//           createdAt: { $gte: start, $lte: end },
-//           status: { $ne: 'cancelled' },
-//         },
-//       },
-//       {
-//         $group: {
-//           _id: null,
-//           totalBookings: { $sum: 1 },
-//           totalDepositsCollected: { $sum: '$deposit' },
-//           totalRevenue: { $sum: '$totalPrice' },
-//           totalRemaining: { $sum: '$remaining' },
-//         },
-//       },
-//     ]),
-//     Booking.aggregate([
-//       { $match: { status: { $ne: 'cancelled' } } },
-//       {
-//         $group: {
-//           _id: '$bookedBy',
-//           totalBookings: { $sum: 1 },
-//           totalRevenue: { $sum: '$totalPrice' },
-//           depositsCollected: { $sum: '$deposit' },
-//         },
-//       },
-//       {
-//         $lookup: {
-//           from: 'users',
-//           localField: '_id',
-//           foreignField: '_id',
-//           as: 'employee',
-//         },
-//       },
-//       { $unwind: '$employee' },
-//       {
-//         $project: {
-//           _id: 0,
-//           employeeId: '$_id',
-//           name: '$employee.name',
-//           email: '$employee.email',
-//           totalBookings: 1,
-//           totalRevenue: 1,
-//           depositsCollected: 1,
-//         },
-//       },
-//       { $sort: { totalBookings: -1 } },
-//     ]),
-//     Booking.aggregate([
-//       {
-//         $group: {
-//           _id: '$status',
-//           count: { $sum: 1 },
-//         },
-//       },
-//     ]),
-//     Booking.aggregate([
-//       { $match: { status: { $ne: 'cancelled' } } },
-//       {
-//         $group: {
-//           _id: null,
-//           totalBookings: { $sum: 1 },
-//           totalRevenue: { $sum: '$totalPrice' },
-//           totalDeposits: { $sum: '$deposit' },
-//         },
-//       },
-//     ]),
-//     Booking.aggregate([
-//       { $match: { status: 'retrieval' } },
-//       {
-//         $group: {
-//           _id: null,
-//           retrievalDiscount: { $sum: { $multiply: ['$totalPrice', 0.25] } },
-//           count: { $sum: 1 },
-//         },
-//       },
-//     ]),
-//     Promise.all([
-//       Booking.find(filter)
-//         .sort({ createdAt: -1 })
-//         .skip(skip)
-//         .limit(Number(limit))
-//         .populate('patient', 'name phone nationality')
-//         .populate('bookedBy', 'name'),
-//       Booking.countDocuments(filter),
-//     ]),
-//   ]);
-
-//   const totalRevenue = allTimeStats?.totalRevenue || 0;
-//   const retrievalDiscount = retrievalStats?.retrievalDiscount || 0;
-//   const projectedRevenue = totalRevenue * 1.5;
-//   const netProjected = projectedRevenue - retrievalDiscount;
-
-//   return {
-//     today: todayStats || {
-//       totalBookings: 0,
-//       totalDepositsCollected: 0,
-//       totalRevenue: 0,
-//       totalRemaining: 0,
-//     },
-//     allTime: allTimeStats || {
-//       totalBookings: 0,
-//       totalRevenue: 0,
-//       totalDeposits: 0,
-//     },
-//     projectedRevenue,
-//     retrievalDiscount,
-//     netProjected,
-//     employeePerformance,
-//     statusBreakdown,
-//     bookings,
-//     totalBookings,
-//     page: Number(page),
-//     limit: Number(limit),
-//   };
-// };
-
 export const getAdminDashboard = async (query) => {
   const { date, page = 1, limit = 10 } = query;
-  const { start, end } = todayRange();
-
-  // ── Today's stats ─────────────────────────────────────
-  const [todayStats] = await Booking.aggregate([
-    {
-      $match: {
-        createdAt: { $gte: start, $lte: end },
-        status: { $ne: 'cancelled' },
-      },
-    },
-    {
-      $group: {
-        _id: null,
-        totalBookings: { $sum: 1 },
-        totalDepositsCollected: { $sum: '$deposit' },
-        totalRevenue: { $sum: '$totalPrice' },
-        totalRemaining: { $sum: '$remaining' },
-      },
-    },
-  ]);
-
-  // ── Employee performance (all time) ───────────────────
-  const employeePerformance = await Booking.aggregate([
-    { $match: { status: { $ne: 'cancelled' } } },
-    {
-      $group: {
-        _id: '$bookedBy',
-        totalBookings: { $sum: 1 },
-        totalRevenue: { $sum: '$totalPrice' },
-        depositsCollected: { $sum: '$deposit' },
-      },
-    },
-    {
-      $lookup: {
-        from: 'users',
-        localField: '_id',
-        foreignField: '_id',
-        as: 'employee',
-      },
-    },
-    { $unwind: '$employee' },
-    {
-      $project: {
-        _id: 0,
-        employeeId: '$_id',
-        name: '$employee.name',
-        email: '$employee.email',
-        totalBookings: 1,
-        totalRevenue: 1,
-        depositsCollected: 1,
-      },
-    },
-    { $sort: { totalBookings: -1 } },
-  ]);
-
-  // ── Bookings by status breakdown ──────────────────────
-  const statusBreakdown = await Booking.aggregate([
-    {
-      $group: {
-        _id: '$status',
-        count: { $sum: 1 },
-      },
-    },
-  ]);
-
-  // ── Recent bookings (paginated) ───────────────────────
   const skip = (page - 1) * limit;
+
+  // If a date is passed use it, otherwise default to today
+  let start, end;
+  if (date) {
+    const d = new Date(date);
+    d.setHours(0, 0, 0, 0);
+    const dEnd = new Date(date);
+    dEnd.setHours(23, 59, 59, 999);
+    start = d;
+    end = dEnd;
+  } else {
+    ({ start, end } = todayRange());
+  }
+
   const filter = {};
   if (date) {
     const d = new Date(date);
@@ -220,38 +38,123 @@ export const getAdminDashboard = async (query) => {
     filter.appointmentDate = { $gte: d, $lte: dEnd };
   }
 
-  // ── All-time aggregate stats ─────────────────────────
-  const [allTimeStats] = await Booking.aggregate([
-    { $match: { status: { $ne: 'cancelled' } } },
-    {
-      $group: {
-        _id: null,
-        totalBookings: { $sum: 1 },
-        totalRevenue: { $sum: '$totalPrice' },
-        totalDeposits: { $sum: '$deposit' },
+  const [
+    [todayStats],
+    [allTimeStats],
+    [allDepositsStats],
+    [retrievalStats],
+    employeePerformance,
+    statusBreakdown,
+    bookings,
+    totalBookings,
+  ] = await Promise.all([
+    // 1. TODAY — deposits + bookings created today from money-received statuses
+    Booking.aggregate([
+      {
+        $match: {
+          createdAt: { $gte: start, $lte: end },
+          status: { $in: ['confirmed', 'done', 'retrieval'] },
+        },
       },
-    },
-  ]);
-
-  // ── Retrieval discount: sum of (totalPrice × 0.25) for retrieval bookings ─
-  const [retrievalStats] = await Booking.aggregate([
-    { $match: { status: 'retrieval' } },
-    {
-      $group: {
-        _id: null,
-        retrievalDiscount: { $sum: { $multiply: ['$totalPrice', 0.25] } },
-        count: { $sum: 1 },
+      {
+        $group: {
+          _id: null,
+          totalBookings: { $sum: 1 },
+          totalDepositsCollected: { $sum: '$deposit' },
+          totalRevenue: { $sum: '$totalPrice' },
+          totalRemaining: { $sum: '$remaining' },
+        },
       },
-    },
-  ]);
+    ]),
 
-  const [bookings, totalBookings] = await Promise.all([
+    // 2. ALL-TIME REVENUE — only confirmed + done (actual earned revenue)
+    Booking.aggregate([
+      { $match: { status: { $in: ['confirmed', 'done'] } } },
+      {
+        $group: {
+          _id: null,
+          totalBookings: { $sum: 1 },
+          totalRevenue: { $sum: '$totalPrice' },
+        },
+      },
+    ]),
+
+    // 3. ALL-TIME DEPOSITS — confirmed + done + retrieval (all statuses you got deposit from)
+    Booking.aggregate([
+      { $match: { status: { $in: ['confirmed', 'done', 'retrieval'] } } },
+      {
+        $group: {
+          _id: null,
+          totalDeposits: { $sum: '$deposit' },
+        },
+      },
+    ]),
+
+    // 4. RETRIEVAL — for discount calculation
+    Booking.aggregate([
+      { $match: { status: 'retrieval' } },
+      {
+        $group: {
+          _id: null,
+          retrievalDiscount: { $sum: { $multiply: ['$totalPrice', 0.75] } },
+          count: { $sum: 1 },
+        },
+      },
+    ]),
+
+    // 5. EMPLOYEE PERFORMANCE
+    Booking.aggregate([
+      { $match: { status: { $ne: 'cancelled' } } },
+      {
+        $group: {
+          _id: '$bookedBy',
+          totalBookings: { $sum: 1 },
+          totalRevenue: { $sum: '$totalPrice' },
+          depositsCollected: { $sum: '$deposit' },
+        },
+      },
+      {
+        $lookup: {
+          from: 'users',
+          localField: '_id',
+          foreignField: '_id',
+          as: 'employee',
+        },
+      },
+      { $unwind: '$employee' },
+      {
+        $project: {
+          _id: 0,
+          employeeId: '$_id',
+          name: '$employee.name',
+          email: '$employee.email',
+          totalBookings: 1,
+          totalRevenue: 1,
+          depositsCollected: 1,
+        },
+      },
+      { $sort: { totalBookings: -1 } },
+    ]),
+
+    // 6. STATUS BREAKDOWN
+    Booking.aggregate([
+      {
+        $group: {
+          _id: '$status',
+          count: { $sum: 1 },
+        },
+      },
+    ]),
+
+    // 7. BOOKINGS LIST (paginated)
     Booking.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(Number(limit))
       .populate('patient', 'name phone nationality')
       .populate('bookedBy', 'name'),
+
+    // 8. TOTAL BOOKINGS COUNT (all ever, no filter)
     Booking.countDocuments(filter),
   ]);
 
@@ -261,16 +164,17 @@ export const getAdminDashboard = async (query) => {
   const netProjected = projectedRevenue - retrievalDiscount;
 
   return {
+    selectedDate: date || null,
     today: todayStats || {
       totalBookings: 0,
       totalDepositsCollected: 0,
       totalRevenue: 0,
       totalRemaining: 0,
     },
-    allTime: allTimeStats || {
-      totalBookings: 0,
-      totalRevenue: 0,
-      totalDeposits: 0,
+    allTime: {
+      totalBookings: allTimeStats?.totalBookings || 0,
+      totalRevenue: allTimeStats?.totalRevenue || 0,
+      totalDeposits: allDepositsStats?.totalDeposits || 0, // from separate aggregate
     },
     projectedRevenue,
     retrievalDiscount,
@@ -287,15 +191,23 @@ export const getAdminDashboard = async (query) => {
 /**
  * Admin: get single employee detail with their bookings.
  */
+
 export const getEmployeeDetail = async (employeeId, query = {}) => {
-  const { from, to, page = 1, limit = 15 } = query;
+  const { from, to, status, page = 1, limit = 15 } = query;
 
   const user = await User.findById(employeeId).select(
     '-password -passwordConfirm',
   );
+
   if (!user) throw new AppError('No employee found with that ID.', 404);
 
-  const filter = { bookedBy: employeeId, status: { $ne: 'cancelled' } };
+  // Build booking filter
+  const filter = { bookedBy: employeeId };
+  if (status) {
+    // Specific status requested — honour it exactly
+    filter.status = status;
+  }
+
   if (from || to) {
     filter.appointmentDate = {};
     if (from) {
@@ -321,7 +233,7 @@ export const getEmployeeDetail = async (employeeId, query = {}) => {
   ]);
 
   const [stats] = await Booking.aggregate([
-    { $match: { bookedBy: user._id, status: { $ne: 'cancelled' } } },
+    { $match: { bookedBy: user._id, status: 'confirmed' } },
     {
       $group: {
         _id: null,

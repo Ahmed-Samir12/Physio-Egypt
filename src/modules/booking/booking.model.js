@@ -76,29 +76,17 @@ const bookingSchema = new Schema(
       trim: true,
     },
 
-    notificationSent: {
-      type: Boolean,
-      default: false,
+    autoDeleteAt: {
+      type: Date,
+      default: () => new Date(Date.now() + 6 * 30 * 24 * 60 * 60 * 1000),
     },
   },
   { timestamps: true },
 );
 
-// ─── Auto-calculate remaining & paymentStatus before save ─────
-bookingSchema.pre('save', function () {
-  if (this.isModified('totalPrice') || this.isModified('deposit')) {
-    if (this.deposit > this.totalPrice) {
-      throw new AppError('Deposit cannot exceed total price', 400);
-    }
-    this.remaining = this.totalPrice - this.deposit;
-
-    if (this.deposit === 0) this.paymentStatus = 'unpaid';
-    else if (this.deposit < this.totalPrice) this.paymentStatus = 'partial';
-    else this.paymentStatus = 'paid';
-  }
-});
-
 // ─── Indexes ──────────────────────────────────────────────────
+bookingSchema.index({ autoDeleteAt: 1 }, { expireAfterSeconds: 0 });
+
 bookingSchema.index(
   { appointmentDate: 1, appointmentTime: 1 },
   {
@@ -108,5 +96,28 @@ bookingSchema.index(
 );
 bookingSchema.index({ bookedBy: 1, createdAt: -1 });
 bookingSchema.index({ appointmentDate: -1 });
+
+// ─── Auto-calculate remaining & paymentStatus before save ─────
+bookingSchema.pre('save', function () {
+  if (this.isModified('totalPrice') || this.isModified('deposit')) {
+    if (this.deposit > this.totalPrice) {
+      throw new AppError('Deposit cannot exceed total price', 400);
+    }
+
+    this.remaining = this.totalPrice - this.deposit;
+
+    if (this.deposit === 0) this.paymentStatus = 'unpaid';
+    else if (this.deposit < this.totalPrice) this.paymentStatus = 'partial';
+    else this.paymentStatus = 'paid';
+  }
+});
+
+// ─── Set autoDeleteAt based on appointmentDate ────────────────
+bookingSchema.pre('save', function () {
+  if (this.isModified('status') || this.isNew) {
+    const base = this.appointmentDate || new Date();
+    this.autoDeleteAt = new Date(base.getTime() + 6 * 30 * 24 * 60 * 60 * 1000);
+  }
+});
 
 export default mongoose.model('Booking', bookingSchema);

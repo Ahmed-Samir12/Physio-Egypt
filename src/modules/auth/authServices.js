@@ -196,7 +196,8 @@ export const refresh = async (refreshToken) => {
   }
 
   // 4) check if user changed password
-  if (user.changedPasswordAfter(storedToken.createdAt)) {
+  // divide by 1000 because createdAt is date object with trillion milliseconds
+  if (user.changedPasswordAfter(storedToken.createdAt.getTime() / 1000)) {
     await tokenServices.revokeTokenUser(user._id);
     throw new AppError('User changed password!, Login again', 401);
   }
@@ -335,6 +336,8 @@ export const updateUserPassword = async (userData) => {
   user.password = newPassword;
   user.passwordConfirm = userData.body.passwordConfirm;
   await user.save();
+
+  await tokenServices.revokeTokenUser(user._id);
 
   return user;
 };

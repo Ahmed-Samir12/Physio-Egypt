@@ -7,6 +7,7 @@ import morgan from 'morgan';
 import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
+import compression from 'compression';
 
 import AppError from './utils/AppError.js';
 import globalErrorHandler from './middlewares/errorHandler.js';
@@ -16,12 +17,14 @@ import patientRoutes from './modules/patient/patient.routes.js';
 import bookingRoutes from './modules/booking/booking.routes.js';
 import employeeRoutes from './modules/employee/employee.routes.js';
 import adminRoutes from './modules/admin/admin.routes.js';
+import viewRoutes from './viewRoutes/views.routes.js';
 
 const app = express();
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // ── Security headers ──────────────────────────────────────
+
 app.use(
   helmet({
     contentSecurityPolicy: {
@@ -69,6 +72,7 @@ app.use(cors({ origin: process.env.FRONTEND_URL, credentials: true }));
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
+  skipSuccessfulRequests: true,
   standardHeaders: true,
   legacyHeaders: false,
   message: {
@@ -76,18 +80,44 @@ const limiter = rateLimit({
     message: 'Too many requests. Please try again later.',
   },
 });
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: {
+    status: 'fail',
+    message: 'Too many login attempts. Try again later.',
+  },
+});
+
+const forgotPasswordLimiter = rateLimit({
+  windowMs: 60 * 60 * 1000, // 1 hour window
+  max: 5, // only 5 attempts per hour
+  message: {
+    status: 'fail',
+    message: 'Too many password reset requests. Try again in an hour.',
+  },
+});
+
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
-  max: 100,
+  max: 25,
+  skipSuccessfulRequests: true,
+  standardHeaders: true,
+  legacyHeaders: false,
   message: {
     status: 'fail',
     message: 'Too many attempts. Please try again later.',
   },
 });
 
-app.use('/api/v1/auth/login', authLimiter);
-app.use('/api/v1/auth/refresh', authLimiter);
-app.use('/api/v1/auth/logout', authLimiter);
+app.use('/api/v1/auth/login', loginLimiter);
+app.use('/api/v1/auth/forgetPassword', forgotPasswordLimiter);
+app.use('/api/v1/auth', authLimiter);
+
 app.use('/api', limiter);
 
 // ── Body parsing ──────────────────────────────────────────
@@ -108,65 +138,17 @@ app.get('/health', async (req, res) => {
   }
 });
 
+// ── Compression ───────────────────────────────────────────
+app.use(compression());
+
 app.set('view engine', 'pug');
+
+// ── Static assets ─────────────────────────────────────────
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Pass env to all Pug views
 app.locals.isProd = process.env.NODE_ENV === 'production';
 app.set('views', path.join(__dirname, 'views'));
-
-// ── No-cache for all HTML pages (prevents stale pages when server is off) ──
-const noCache = (_, res, next) => {
-  res.setHeader(
-    'Cache-Control',
-    'no-store, no-cache, must-revalidate, proxy-revalidate',
-  );
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  next();
-};
-
-// ── Page routes ───────────────────────────────────────────
-app.get('/', (req, res) => res.redirect('/dashboard'));
-app.get('/login', noCache, (req, res) => res.render('pages/login'));
-app.get('/dashboard', noCache, (req, res) => res.render('pages/dashboard'));
-app.get('/employee/dashboard', noCache, (req, res) =>
-  res.render('pages/employee/dashboard'),
-);
-app.get('/bookings', noCache, (req, res) => res.render('pages/bookings/index'));
-app.get('/bookings/new', noCache, (req, res) =>
-  res.render('pages/bookings/new'),
-);
-app.get('/bookings/:id', noCache, (req, res) =>
-  res.render('pages/bookings/detail', { id: req.params.id }),
-);
-app.get('/patients', noCache, (req, res) => res.render('pages/patients/index'));
-app.get('/patients/:id', noCache, (req, res) =>
-  res.render('pages/patients/detail', { id: req.params.id }),
-);
-app.get('/admin/dashboard', noCache, (req, res) =>
-  res.render('pages/admin/dashboard'),
-);
-app.get('/admin/users', noCache, (req, res) => res.render('pages/admin/users'));
-app.get('/admin/employees/:id', noCache, (req, res) =>
-  res.render('pages/admin/employee-detail'),
-);
-app.get('/profile', noCache, (req, res) => res.render('pages/profile'));
-app.get('/reset-password/:token', noCache, (req, res) =>
-  res.render('pages/reset-password', { token: req.params.token }),
-);
-
-// ── Email verification result pages ─────────────────────────
-app.get('/verify-email/success', noCache, (req, res) =>
-  res.render('pages/verify-email-success'),
-);
-app.get('/verify-email/error', noCache, (req, res) =>
-  res.render('pages/verify-email-error', {
-    reason: req.query.reason || 'invalid',
-  }),
-);
-
-// ── Static assets ─────────────────────────────────────────
-app.use(express.static(path.join(__dirname, 'public')));
 
 // ── API routes ────────────────────────────────────────────
 app.use('/api/v1/auth', authRoutes);
@@ -174,6 +156,7 @@ app.use('/api/v1/patients', patientRoutes);
 app.use('/api/v1/bookings', bookingRoutes);
 app.use('/api/v1/employee', employeeRoutes);
 app.use('/api/v1/admin', adminRoutes);
+app.use('/', viewRoutes);
 
 // ── 404 ───────────────────────────────────────────────────
 app.all('/{*splat}', (req, res, next) =>
