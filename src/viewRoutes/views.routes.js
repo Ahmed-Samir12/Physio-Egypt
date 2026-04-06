@@ -64,6 +64,14 @@ router.get(
   pageRestrictTo('admin', 'mini-admin'),
   (req, res) => res.render('pages/admin/employee-detail'),
 );
+
+router.get(
+  '/mini-admin/dashboard',
+  protectPage,
+  pageRestrictTo('mini-admin', 'admin'), // admin can visit too if needed
+  (req, res) => res.render('pages/mini-admin/dashboard'),
+);
+
 router.get('/profile', protectPage, (req, res) => res.render('pages/profile'));
 router.get('/reset-password/:token', (req, res) =>
   res.render('pages/reset-password', { token: req.params.token }),
