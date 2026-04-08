@@ -72,6 +72,13 @@ export const buildCardHTML = ({
        </div>`
     : '';
 
+  const notesRow = patient.notes
+    ? `<div class="field" style="align-items:flex-start">
+         <span class="field-label" style="padding-top:2px">ملاحظات</span>
+         <span class="field-value" style="text-align:right;white-space:pre-wrap">${patient.notes}</span>
+       </div>`
+    : '';
+
   const whatsappRow = patient.whatsappNumber
     ? `<div class="field">
          <span class="field-label">واتساب</span>
@@ -84,7 +91,7 @@ export const buildCardHTML = ({
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>بطاقة المريض — ${patient.name}</title>
+<title>بطاقة المريض - ${patient.patientId} - ${patient.phone}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 <style>
@@ -97,7 +104,8 @@ export const buildCardHTML = ({
     direction:rtl;
   }
   .card {
-    background:#fff; width:440px; border-radius:20px; overflow:hidden;
+    background:#fff; width:440px; max-width:100%; border-radius:20px; overflow:hidden;
+    margin:0 auto;
     border:1px solid #e2e8f0;
     box-shadow:0 8px 40px rgba(14,165,233,0.13), 0 2px 8px rgba(0,0,0,0.06);
     print-color-adjust:exact; -webkit-print-color-adjust:exact;
@@ -181,7 +189,7 @@ export const buildCardHTML = ({
     height:4px;
   }
   @page {
-    size: A5 portrait;
+    size: A4 portrait;
     margin: 10mm;
   }
   @media print {
@@ -239,7 +247,17 @@ export const buildCardHTML = ({
     </div>
     <div class="field">
       <span class="field-label">العنوان</span>
-      <span class="field-value">${patient.address || '—'}</span>
+      <span class="field-value">${
+        patient.address && typeof patient.address === 'object'
+          ? [
+              patient.address.street,
+              patient.address.city,
+              patient.address.governorate,
+            ]
+              .filter(Boolean)
+              .join('، ') || '—'
+          : patient.address || '—'
+      }</span>
     </div>
     <div class="field">
       <span class="field-label">الجنسية</span>
@@ -248,6 +266,7 @@ export const buildCardHTML = ({
     ${complaintRow}
     ${whatsappRow}
     ${companionRow}
+    ${notesRow}
 
     <hr class="divider"/>
 
@@ -326,9 +345,16 @@ export const generateCardPDF = async ({ patient, booking }) => {
   });
   try {
     const page = await browser.newPage();
+    // Set a fixed viewport width matching the card; height will auto-expand
+    await page.setViewport({ width: 500, height: 800, deviceScaleFactor: 2 });
     await page.setContent(html, { waitUntil: 'networkidle0' });
+    // Shrink the PDF to the actual content height — eliminates blank space
+    const bodyHandle = await page.$('body');
+    const { height } = await bodyHandle.boundingBox();
+    await bodyHandle.dispose();
     const pdf = await page.pdf({
-      width: '460px',
+      width: '500px',
+      height: `${Math.ceil(height) + 40}px`,
       printBackground: true,
       margin: { top: '0', bottom: '0', left: '0', right: '0' },
     });

@@ -126,16 +126,24 @@ html(lang="en")
       // The server-side /api/v1/auth/refresh-page redirect handles the case
       // where a user returns after being idle for more than 15 minutes.
       (function startTokenKeepalive() {
-        const INTERVAL_MS = 14 * 60 * 1000; // 14 minutes
+        const INTERVAL_MS = 14 * 60 * 1000;
         async function silentRefresh() {
           try {
             const r = await fetch('/api/v1/auth/refresh', {
               method: 'POST',
               credentials: 'include',
             });
-            // If the refresh token itself is expired, redirect to login
-            if (r.status === 401 || r.status === 403) {
+            // 401 = refresh token genuinely expired → go to login
+            if (r.status === 401) {
               window.location.href = '/login';
+              return;
+            }
+            // 403 = likely multi-tab race condition (other tab already rotated).
+            // The cookie already has the new token — do nothing, next interval will work.
+            // Only redirect if we also can't reach /me (truly logged out)
+            if (r.status === 403) {
+              const check = await fetch('/api/v1/auth/me', { credentials: 'include' });
+              if (!check.ok) window.location.href = '/login';
             }
           } catch {
             // Network error — keep the interval running, don't log out

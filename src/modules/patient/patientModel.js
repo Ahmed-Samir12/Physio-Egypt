@@ -23,7 +23,6 @@ const patientSchema = new Schema(
 
     phone: {
       type: String,
-      required: [true, 'Patient must have a phone number'],
       trim: true,
       validate: {
         validator: function (value) {
@@ -42,12 +41,12 @@ const patientSchema = new Schema(
     gender: {
       type: String,
       enum: ['male', 'female'],
-      required: [true, 'Patient must have a gender'],
     },
 
     address: {
       type: String,
       trim: true,
+      required: [true, 'Please provide an address'],
     },
 
     nationality: {
@@ -60,6 +59,7 @@ const patientSchema = new Schema(
       type: String,
       trim: true,
       default: '',
+      required: true,
     },
 
     whatsappNumber: {
@@ -102,11 +102,11 @@ patientSchema.pre('save', async function () {
 
   let next = 1;
   if (last?.patientId) {
-    const num = parseInt(last.patientId.replace('PT-', ''), 10);
+    const num = parseInt(last.patientId.replace('PT', ''), 10);
     if (!isNaN(num)) next = num + 1;
   }
 
-  this.patientId = `PT-${String(next).padStart(5, '0')}`;
+  this.patientId = `PT${String(next).padStart(5, '0')}`;
 });
 
 export default mongoose.model('Patient', patientSchema);

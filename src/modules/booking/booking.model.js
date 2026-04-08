@@ -19,30 +19,25 @@ const bookingSchema = new Schema(
 
     appointmentDate: {
       type: Date,
-      required: [true, 'Appointment date is required'],
     },
 
     appointmentTime: {
       type: String,
-      required: [true, 'Appointment time is required'],
       match: [/^([01]\d|2[0-3]):([0-5]\d)$/, 'Time must be in HH:MM format'],
     },
 
     serviceType: {
       type: String,
-      required: [true, 'Service type is required'],
       trim: true,
     },
 
     totalPrice: {
       type: Number,
-      required: [true, 'Total price is required'],
       min: [0, 'Price cannot be negative'],
     },
 
     deposit: {
       type: Number,
-      required: [true, 'Deposit is required'],
       min: [0, 'Deposit cannot be negative'],
       default: 0,
     },

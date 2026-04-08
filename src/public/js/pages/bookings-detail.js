@@ -13,6 +13,7 @@ const els = {
   pId: $('[data-patient-id]'),
   pNationality: $('[data-patient-nationality]'),
   pComplaint: $('[data-complaint-val]'),
+  pNotes: $('[data-notes-val]'),
   copyPhone: $('[data-call-phone]'),
   waLink: $('[data-whatsapp-link]'),
   companionRow: $('[data-companion-row]'),
@@ -30,6 +31,23 @@ const els = {
   printCard: $('[data-print-card]'),
   downloadCard: $('[data-download-card]'),
   shareCardWa: $('[data-share-card-wa]'),
+  // ── Edit booking fields ─────────────────────────────────
+  editService: $('[data-edit-service]'),
+  editDate: $('[data-edit-date]'),
+  editTime: $('[data-edit-time]'),
+  editCompanion: $('[data-edit-companion]'),
+  editNotes: $('[data-edit-notes]'),
+  saveBookingBtn: $('[data-save-booking-btn]'),
+  // ── Edit patient fields ─────────────────────────────────
+  editPName: $('[data-edit-p-name]'),
+  editPPhone: $('[data-edit-p-phone]'),
+  editPAge: $('[data-edit-p-age]'),
+  editPGender: $('[data-edit-p-gender]'),
+  editPNationality: $('[data-edit-p-nationality]'),
+  editPComplaint: $('[data-edit-p-complaint]'),
+  editPWhatsapp: $('[data-edit-p-whatsapp]'),
+  editPNotes: $('[data-edit-p-notes]'),
+  savePatientBtn: $('[data-save-patient-btn]'),
 };
 
 // Cached booking data for WhatsApp sharing
@@ -101,6 +119,7 @@ function buildWhatsAppText(patient, booking) {
     ` المريض: *${patient.name || '—'}*`,
     ` الهاتف: ${patient.phone || '—'}`,
     `الشكوي: ${patient.complaint || '—'}`,
+    `ملاحظات: ${patient.notes || '—'}`,
   ];
 
   if (patient.nationality) lines.push(` الجنسية: ${patient.nationality}`);
@@ -192,6 +211,12 @@ async function load() {
         ?.classList.remove('hidden');
     }
 
+    // Notes
+    const notes = p?.notes || '';
+    if (notes && els.pNotes) {
+      els.pNotes.textContent = notes;
+    }
+
     // Phone — tap to call
     const phone = p?.phone || b?.phone || '';
     if (els.copyPhone) {
@@ -233,6 +258,43 @@ async function load() {
     if (els.total) els.total.value = b?.totalPrice ?? 0;
     if (els.deposit) els.deposit.value = b?.deposit ?? 0;
     updateRemaining();
+
+    // ── Populate edit booking fields ────────────────────────
+    if (els.editService) els.editService.value = b?.serviceType || '';
+    if (els.editDate && b?.appointmentDate)
+      els.editDate.value = new Date(b.appointmentDate)
+        .toISOString()
+        .slice(0, 10);
+    if (els.editTime) els.editTime.value = b?.appointmentTime || '';
+    if (els.editCompanion) els.editCompanion.value = b?.companion || '';
+    if (els.editNotes) els.editNotes.value = b?.notes || '';
+
+    // ── Populate edit patient fields ────────────────────────
+    if (els.editPName) els.editPName.value = p?.name || '';
+    if (els.editPPhone) els.editPPhone.value = p?.phone || '';
+    if (els.editPAge) els.editPAge.value = p?.age ?? '';
+    if (els.editPNationality) els.editPNationality.value = p?.nationality || '';
+    if (els.editPComplaint) els.editPComplaint.value = p?.complaint || '';
+    if (els.editPWhatsapp) els.editPWhatsapp.value = p?.whatsappNumber || '';
+    if (els.editPNotes) els.editPNotes.value = p?.notes || '';
+    // Gender pills for patient edit
+    const gVal = String(p?.gender || '').toLowerCase();
+    els.editPGender
+      ?.querySelectorAll('input[name="edit-gender"]')
+      .forEach((r) => {
+        r.checked = r.value === gVal;
+        r.closest('.pill')?.classList.toggle('is-active', r.checked);
+      });
+    els.editPGender?.addEventListener('change', () => {
+      els.editPGender
+        .querySelectorAll('.pill')
+        .forEach((pill) =>
+          pill.classList.toggle(
+            'is-active',
+            Boolean(pill.querySelector('input')?.checked),
+          ),
+        );
+    });
 
     window.lucide?.createIcons?.({ attrs: { 'stroke-width': 1.8 } });
   } catch (e) {
@@ -361,6 +423,117 @@ els.shareCardWa?.addEventListener('click', () => {
     : `https://wa.me/?text=${encodeURIComponent(text)}`;
 
   window.open(url, '_blank', 'noopener,noreferrer');
+});
+
+// ── Save booking edits ────────────────────────────────────
+els.saveBookingBtn?.addEventListener('click', async () => {
+  const btn = els.saveBookingBtn;
+  btn.disabled = true;
+  try {
+    const payload = {};
+    if (els.editService?.value.trim())
+      payload.serviceType = els.editService.value.trim();
+    if (els.editDate?.value) payload.appointmentDate = els.editDate.value;
+    if (els.editTime?.value) payload.appointmentTime = els.editTime.value;
+    payload.companion = els.editCompanion?.value.trim() || '';
+    payload.notes = els.editNotes?.value.trim() || '';
+
+    const res = await apiFetch(`/bookings/${encodeURIComponent(bookingId)}`, {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    });
+    if (!res) return;
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json?.message || 'فشل حفظ التعديلات');
+
+    // Refresh cached booking & update display labels
+    const b = json?.data?.booking || json?.data || json;
+    _booking = b;
+    if (els.bService) els.bService.textContent = b?.serviceType || '—';
+    if (els.bDate) els.bDate.textContent = fmtDate(b?.appointmentDate);
+    if (els.bTime) els.bTime.textContent = b?.appointmentTime || '—';
+    if (els.companionName) els.companionName.textContent = b?.companion || '';
+    if (els.companionRow)
+      els.companionRow.classList.toggle('hidden', !b?.companion);
+
+    showAlert('success', 'تم حفظ تعديلات الموعد.', { title: 'تم التحديث' });
+  } catch (e) {
+    showAlert('error', e?.message || 'فشل حفظ التعديلات', { title: 'خطأ' });
+  } finally {
+    btn.disabled = false;
+  }
+});
+
+// ── Save patient edits ────────────────────────────────────
+els.savePatientBtn?.addEventListener('click', async () => {
+  if (!_patient?._id) {
+    showAlert('error', 'لم يتم تحميل بيانات المريض بعد.', { title: 'خطأ' });
+    return;
+  }
+  const btn = els.savePatientBtn;
+  btn.disabled = true;
+  try {
+    const gender =
+      els.editPGender?.querySelector('input[name="edit-gender"]:checked')
+        ?.value || '';
+    const payload = {
+      name: els.editPName?.value.trim() || undefined,
+      phone: els.editPPhone?.value.trim() || undefined,
+      age: els.editPAge?.value ? Number(els.editPAge.value) : undefined,
+      gender: gender || undefined,
+      nationality: els.editPNationality?.value.trim() || '',
+      complaint: els.editPComplaint?.value.trim() || '',
+      whatsappNumber: els.editPWhatsapp?.value.trim() || '',
+      notes: els.editPNotes?.value.trim() || '',
+    };
+    // Remove undefined keys — don't accidentally blank out fields
+    Object.keys(payload).forEach(
+      (k) => payload[k] === undefined && delete payload[k],
+    );
+
+    const res = await apiFetch(
+      `/patients/${encodeURIComponent(_patient._id)}`,
+      {
+        method: 'PATCH',
+        body: JSON.stringify(payload),
+      },
+    );
+    if (!res) return;
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json?.message || 'فشل حفظ بيانات المريض');
+
+    const p = json?.data?.patient || json?.data || json;
+    _patient = p;
+
+    // Refresh display in the info card at the top
+    if (els.pName) els.pName.textContent = p?.name || '—';
+    if (els.pAge) els.pAge.textContent = p?.age != null ? `${p.age} سنة` : '—';
+    if (els.pGender)
+      els.pGender.textContent =
+        p?.gender === 'male' ? 'ذكر' : p?.gender === 'female' ? 'أنثى' : '—';
+    if (els.pNationality) {
+      els.pNationality.textContent = p?.nationality || '';
+      els.pNationality.classList.toggle('hidden', !p?.nationality);
+    }
+    if (els.pComplaint) {
+      els.pComplaint.textContent = p?.complaint || '';
+      els.pComplaint
+        .closest?.('[data-complaint-row]')
+        ?.classList.toggle('hidden', !p?.complaint);
+    }
+    const phoneSpan =
+      els.copyPhone?.querySelector('[data-phone-display]') ||
+      els.copyPhone?.querySelector('span');
+    if (phoneSpan) phoneSpan.textContent = p?.phone || '—';
+    const waNum = (p?.whatsappNumber || p?.phone || '').replace(/\D/g, '');
+    if (els.waLink && waNum) els.waLink.href = `https://wa.me/${waNum}`;
+
+    showAlert('success', 'تم حفظ بيانات المريض.', { title: 'تم التحديث' });
+  } catch (e) {
+    showAlert('error', e?.message || 'فشل حفظ بيانات المريض', { title: 'خطأ' });
+  } finally {
+    btn.disabled = false;
+  }
 });
 
 await load();

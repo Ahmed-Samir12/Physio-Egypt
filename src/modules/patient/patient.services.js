@@ -99,8 +99,8 @@ export const getPatientById = async (id) => {
  * Update patient info.
  */
 export const updatePatient = async (id, data) => {
-  const { phone, ...safeData } = data;
-  const patient = await Patient.findByIdAndUpdate(id, safeData, {
+  // phone IS allowed to be updated — remove the old restriction
+  const patient = await Patient.findByIdAndUpdate(id, data, {
     new: true,
     runValidators: true,
   });

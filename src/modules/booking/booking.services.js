@@ -207,6 +207,7 @@ export const updateBooking = async (id, data, user) => {
     'companion',
     'appointmentDate',
     'appointmentTime',
+    'serviceType',
   ];
 
   allowed.forEach((field) => {
@@ -224,7 +225,7 @@ export const updateBooking = async (id, data, user) => {
     {
       path: 'patient',
       select:
-        'patientId name phone age gender address nationality complaint whatsappNumber',
+        'patientId name phone age gender address nationality complaint whatsappNumber notes',
     },
     { path: 'bookedBy', select: 'name email' },
   ]);

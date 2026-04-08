@@ -39,6 +39,9 @@ block content
         .info-row.hidden(data-complaint-row, style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border)")
           .info-label الشكوى
           .info-val(data-complaint-val) —
+        .info-row(data-notes-row, style="margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border)")
+          .info-label ملاحظات
+          .info-val(data-notes-val) —
 
       //- Appointment info
       .card.card-pad.reveal
@@ -130,6 +133,79 @@ block content
             i(data-lucide="alert-circle")
             | المبلغ المتبقي
           .remaining-amount(data-remaining) —
+
+      //- Edit booking details
+      .card.card-pad.reveal
+        .section-label
+          i(data-lucide="pencil")
+          span تعديل الموعد
+        .field
+          label.label نوع الخدمة
+          input.input(type="text", placeholder="زيارة منزلية / استشارة…", data-edit-service, list="edit-services")
+          datalist#edit-services
+            option(value="زيارة منزلية")
+            option(value="استشارة")
+            option(value="تحاليل")
+        .split-row
+          .field
+            label.label التاريخ
+            input.input(type="date", data-edit-date, dir="ltr")
+          .field
+            label.label الوقت
+            input.input(type="time", data-edit-time, dir="ltr")
+        .field
+          label.label ملاحظات الموعد
+            span.field-optional  (اختياري)
+          textarea.textarea(rows="2", placeholder="ملاحظات…", data-edit-notes)
+        button.btn.btn-primary(type="button", data-save-booking-btn, style="margin-top:.5rem;width:100%")
+          i(data-lucide="save")
+          span حفظ التعديلات
+
+      //- Edit patient
+      .card.card-pad.reveal
+        .section-label
+          i(data-lucide="user-pen")
+          span تعديل بيانات المريض
+        .field
+          label.label الاسم الكامل
+          input.input(type="text", placeholder="الاسم", data-edit-p-name)
+        .split-row
+          .field
+            label.label رقم الهاتف
+            input.input(type="tel", placeholder="+20XXXXXXXXXX", data-edit-p-phone, dir="ltr")
+          .field
+            label.label العمر
+            input.input(type="number", min="0", placeholder="السن", data-edit-p-age)
+        .field
+          label.label الجنس
+          .pill-group(data-edit-p-gender)
+            label.pill
+              input(type="radio", name="edit-gender", value="male")
+              span ذكر
+            label.pill
+              input(type="radio", name="edit-gender", value="female")
+              span أنثى
+        .field
+          label.label الجنسية
+          input.input(type="text", placeholder="مصري / سعودي…", data-edit-p-nationality)
+        .field
+          label.label الشكوى
+          input.input(type="text", placeholder="ماذا يشكو المريض؟", data-edit-p-complaint)
+        .field
+          label.label المرافق
+            span.field-optional  (اختياري)
+          input.input(type="text", placeholder="اسم المرافق", data-edit-companion)
+        .field
+          label.label رقم الواتساب
+            span.field-optional  (اختياري)
+          input.input(type="tel", placeholder="+20XXXXXXXXXX", data-edit-p-whatsapp, dir="ltr")
+        .field
+          label.label ملاحظات
+            span.field-optional  (اختياري)
+          textarea.textarea(rows="2", placeholder="ملاحظات عن المريض…", data-edit-p-notes)
+        button.btn.btn-primary(type="button", data-save-patient-btn, style="margin-top:.5rem;width:100%")
+          i(data-lucide="save")
+          span حفظ بيانات المريض
 
 block pageScripts
   script(type="module", src="/js/pages/bookings-detail.js")

@@ -19,8 +19,7 @@ block content
         .field
           label.label(for="phone") رقم الهاتف
           .input-group
-            span.input-prefix +20
-            input#phone.input.with-prefix(type="tel", inputmode="tel", placeholder="1XXXXXXXXX", data-phone, dir="ltr")
+            input#phone.input(type="tel", inputmode="tel", placeholder="+201XXXXXXXXX", data-phone, dir="ltr")
           .patient-found-badge.hidden(data-found)
             i(data-lucide="check-circle")
             | تم العثور على المريض ✓
@@ -35,7 +34,7 @@ block content
 
         .field
           label.label(for="patient-id") رقم المريض
-          input#patient-id.input(type="text", placeholder="PT-00001", disabled, data-patient-id)
+          input#patient-id.input(type="text", placeholder="PT00001", disabled, data-patient-id)
 
         .field
           label.label الجنس
@@ -86,8 +85,7 @@ block content
             | رقم الواتساب
             span.field-optional (اختياري)
           .input-group
-            span.input-prefix +20
-            input#whatsappNumber.input.with-prefix(type="tel", inputmode="tel", placeholder="1XXXXXXXXX", data-whatsapp-number, dir="ltr")
+            input#whatsappNumber.input(type="tel", inputmode="tel", placeholder="+201XXXXXXXXX", data-whatsapp-number, dir="ltr")
           .field-hint اتركه فارغاً إذا كان نفس رقم الهاتف
 
         //- Companion field (optional)
@@ -110,10 +108,10 @@ block content
         .split-row(style="margin-top:1rem")
           .field
             label.label(for="date") التاريخ
-            input#date.input(type="date", required, data-date, dir="ltr")
+            input#date.input(type="date", data-date, dir="ltr")
           .field
             label.label(for="time") الوقت
-            input#time.input(type="time", required, data-time, dir="ltr")
+            input#time.input(type="time", data-time, dir="ltr")
 
         .field
           label.label(for="service") نوع الخدمة
@@ -122,15 +120,12 @@ block content
             option(value="زيارة منزلية")
             option(value="استشارة")
             option(value="تحاليل")
-            option(value="Home Visit")
-            option(value="Consultation")
-            option(value="Lab Test")
 
         .split-row
           .field
             label.label(for="total") إجمالي السعر
             .input-group
-              input#total.input.with-suffix(type="number", min="0", step="1", placeholder="0", required, data-total, dir="ltr")
+              input#total.input.with-suffix(type="number", min="0", step="1", placeholder="0", data-total, dir="ltr")
               span.input-suffix EGP
           .field
             label.label(for="deposit") العربون
