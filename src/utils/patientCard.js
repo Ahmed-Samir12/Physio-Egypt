@@ -91,7 +91,7 @@ export const buildCardHTML = ({
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>بطاقة المريض - ${patient.patientId} - ${patient.phone}</title>
+<title>بطاقة المريض - ${patient.name} - ${patient.patientId} - ${patient.phone}</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 <style>
