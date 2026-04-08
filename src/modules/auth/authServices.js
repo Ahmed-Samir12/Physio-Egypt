@@ -179,7 +179,15 @@ export const refresh = async (refreshToken) => {
   // Token reuse detection: token was already rotated/revoked — possible theft.
   // Revoke every token in this family to force all sessions to re-authenticate.
   if (storedToken.revoked) {
-    await tokenServices.revokeTokenFamily(storedToken.familyId);
+    const rotatedRecently =
+      storedToken.updatedAt &&
+      Date.now() - storedToken.updatedAt.getTime() < 10_000;
+
+    if (!rotatedRecently) {
+      // Genuinely suspicious — revoke the whole family
+      await tokenServices.revokeTokenFamily(storedToken.familyId);
+    }
+
     throw new AppError('Token reuse detected! Login required.', 403);
   }
 

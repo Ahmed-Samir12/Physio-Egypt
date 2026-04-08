@@ -1,32 +1,51 @@
 import mongoose from 'mongoose';
-import '../src/config/env.js';
-import connectDB from '../src/config/db.js';
-import Patient from '../src/modules/patient/patientModel.js';
+import dotenv from 'dotenv';
+import { fileURLToPath } from 'url';
+import path from 'path';
 
-await connectDB();
+// ── Load env ──────────────────────────────────────────────
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.join(__dirname, '../.env') });
 
-const filter = {
-  $or: [
-    { patientId: { $exists: false } },
-    { patientId: null },
-    { patientId: '' },
-  ],
-};
+const MONGO_URI = process.env.DATABASE_URL.replace(
+  '<db_password>',
+  process.env.DATABASE_PASSWORD,
+);
 
-let updated = 0;
+await mongoose.connect(MONGO_URI);
+console.log('Connected to MongoDB');
 
-// Use cursor to avoid loading everything in memory.
-for await (const patient of Patient.find(filter).cursor()) {
-  if (patient.patientId) continue; // just in case
-  await patient.save(); // triggers pre('save') hook
-  updated += 1;
+const Patient = mongoose.connection.collection('patients');
 
-  if (updated % 50 === 0) {
-    console.log(`... migrated ${updated} patients`);
+// Find all patients with old format PT-XXXXX
+const patients = await Patient.find({
+  patientId: { $regex: /^PT-\d+$/ },
+}).toArray();
+
+console.log(`Found ${patients.length} patients to migrate`);
+
+if (patients.length === 0) {
+  console.log('Nothing to migrate.');
+  await mongoose.disconnect();
+  process.exit(0);
+}
+
+let success = 0;
+let failed = 0;
+
+for (const p of patients) {
+  const oldId = p.patientId; // e.g. PT-00001
+  const newId = oldId.replace('PT-', 'PT'); // → PT00001
+
+  try {
+    await Patient.updateOne({ _id: p._id }, { $set: { patientId: newId } });
+    console.log(`  ✅ ${oldId} → ${newId}`);
+    success++;
+  } catch (err) {
+    console.error(`  ❌ Failed to update ${oldId}:`, err.message);
+    failed++;
   }
 }
 
-console.log(`✅ PatientId migration complete. Updated: ${updated}`);
-
-await mongoose.connection.close();
-
+console.log(`\nDone. ${success} updated, ${failed} failed.`);
+await mongoose.disconnect();
