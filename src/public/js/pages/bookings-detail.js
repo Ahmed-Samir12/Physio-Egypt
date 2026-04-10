@@ -83,6 +83,11 @@ function updateRemaining() {
   }
 }
 
+function toWaNum(raw) {
+  const digits = (raw || '').replace(/\D/g, '');
+  return digits.startsWith('0') ? '20' + digits.slice(1) : digits;
+}
+
 // ── Build WhatsApp message text ───────────────────────────
 function buildWhatsAppText(patient, booking) {
   const date = booking.appointmentDate
@@ -233,7 +238,7 @@ async function load() {
     }
 
     // WhatsApp chat link — prefer whatsappNumber, fallback to phone
-    const waNum = (p?.whatsappNumber || phone || '').replace(/\D/g, '');
+    const waNum = toWaNum(p?.whatsappNumber || phone || '');
     if (els.waLink && waNum) {
       els.waLink.href = `https://wa.me/${waNum}`;
       els.waLink.target = '_blank';
@@ -413,10 +418,7 @@ els.shareCardWa?.addEventListener('click', () => {
     return;
   }
 
-  const waNum = (_patient.whatsappNumber || _patient.phone || '').replace(
-    /\D/g,
-    '',
-  );
+  const waNum = toWaNum(_patient?.whatsappNumber || _patient.phone || '');
   const text = buildWhatsAppText(_patient, _booking);
   const url = waNum
     ? `https://wa.me/${waNum}?text=${encodeURIComponent(text)}`
@@ -521,11 +523,16 @@ els.savePatientBtn?.addEventListener('click', async () => {
         .closest?.('[data-complaint-row]')
         ?.classList.toggle('hidden', !p?.complaint);
     }
+
+    if (els.pNotes) {
+      els.pNotes.textContent = p?.notes || '—';
+    }
+
     const phoneSpan =
       els.copyPhone?.querySelector('[data-phone-display]') ||
       els.copyPhone?.querySelector('span');
     if (phoneSpan) phoneSpan.textContent = p?.phone || '—';
-    const waNum = (p?.whatsappNumber || p?.phone || '').replace(/\D/g, '');
+    const waNum = toWaNum(p?.whatsappNumber || p?.phone || '');
     if (els.waLink && waNum) els.waLink.href = `https://wa.me/${waNum}`;
 
     showAlert('success', 'تم حفظ بيانات المريض.', { title: 'تم التحديث' });
