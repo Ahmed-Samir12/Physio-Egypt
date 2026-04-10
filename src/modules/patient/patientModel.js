@@ -89,6 +89,21 @@ patientSchema.methods.resetAutoDelete = async function () {
   await this.save({ validateBeforeSave: false });
 };
 
+patientSchema.pre('validate', function () {
+  if (this.phone) {
+    // Strip +20 or +2 prefix, keep local 01XXXXXXXXX format
+    this.phone = this.phone.replace(/^\+20/, '').replace(/^\+2/, '');
+    if (!this.phone.startsWith('0')) this.phone = '0' + this.phone;
+  }
+  if (this.whatsappNumber) {
+    this.whatsappNumber = this.whatsappNumber
+      .replace(/^\+20/, '')
+      .replace(/^\+2/, '');
+    if (this.whatsappNumber && !this.whatsappNumber.startsWith('0'))
+      this.whatsappNumber = '0' + this.whatsappNumber;
+  }
+});
+
 // Auto-generate patientId before first save
 patientSchema.pre('save', async function () {
   if (this.patientId) return;

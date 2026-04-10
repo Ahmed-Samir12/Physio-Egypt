@@ -48,7 +48,8 @@ function cleanDigits(s) {
 function getFullPhone() {
   const d = cleanDigits(phoneEl.value);
   if (!d) return '';
-  return d.startsWith('20') ? `+${d}` : `+20${d}`;
+
+  return d.startsWith('0') ? d : `0${d}`;
 }
 
 function setFound(isFound) {
@@ -113,10 +114,7 @@ const tryFindPatient = debounce(async () => {
     if (addressEl) addressEl.value = p?.address || '';
     if (nationalityEl) nationalityEl.value = p?.nationality || '';
     if (complaintEl) complaintEl.value = p?.complaint || '';
-    if (whatsappNumEl)
-      whatsappNumEl.value = p?.whatsappNumber
-        ? p.whatsappNumber.replace(/^\+20/, '')
-        : '';
+    if (whatsappNumEl) whatsappNumEl.value = p?.whatsappNumber || '';
     if (pnotesEl) pnotesEl.value = p?.notes || '';
     if (patientIdEl) patientIdEl.value = p?.patientId || '';
     const g = String(p?.gender || '').toLowerCase();
@@ -149,11 +147,7 @@ form?.addEventListener('submit', async (e) => {
         address: addressEl?.value?.trim() || '',
         nationality: nationalityEl?.value?.trim() || '',
         complaint: complaintEl?.value?.trim() || '',
-        whatsappNumber: whatsappNumEl?.value?.trim()
-          ? whatsappNumEl.value.trim().startsWith('+')
-            ? whatsappNumEl.value.trim()
-            : `+20${whatsappNumEl.value.trim().replace(/^0/, '')}`
-          : '',
+        whatsappNumber: whatsappNumEl?.value?.trim() || '',
         notes: pnotesEl?.value?.trim() || '',
       },
       booking: {

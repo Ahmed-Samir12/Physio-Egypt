@@ -86,7 +86,7 @@ export const createBooking = async (bookingData, employeeId) => {
     {
       path: 'patient',
       select:
-        'patientId name phone age gender address nationality complaint whatsappNumber',
+        'patientId name phone age gender address nationality complaint whatsappNumber notes',
     },
     { path: 'bookedBy', select: 'name email' },
   ]);
@@ -164,7 +164,7 @@ export const getBookingById = async (id, user) => {
   const booking = await Booking.findById(id)
     .populate(
       'patient',
-      'patientId name phone age gender address nationality complaint whatsappNumber',
+      'patientId name phone age gender address nationality complaint whatsappNumber notes',
     )
     .populate('bookedBy', 'name email');
 
