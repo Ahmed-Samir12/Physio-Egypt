@@ -82,13 +82,6 @@ const bookingSchema = new Schema(
 // ─── Indexes ──────────────────────────────────────────────────
 bookingSchema.index({ autoDeleteAt: 1 }, { expireAfterSeconds: 0 });
 
-bookingSchema.index(
-  { appointmentDate: 1, appointmentTime: 1 },
-  {
-    unique: true,
-    partialFilterExpression: { status: { $in: ['pending', 'confirmed'] } },
-  },
-);
 bookingSchema.index({ bookedBy: 1, createdAt: -1 });
 bookingSchema.index({ appointmentDate: -1 });
 
