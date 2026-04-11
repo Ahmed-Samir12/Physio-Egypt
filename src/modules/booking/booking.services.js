@@ -71,13 +71,6 @@ export const createBooking = async (bookingData, employeeId) => {
       status: 'pending',
     });
   } catch (err) {
-    // Duplicate key on compound index → slot already taken
-    if (err.code === 11000) {
-      throw new AppError(
-        `This time slot (${appointmentTime} on ${new Date(appointmentDate).toDateString()}) is already booked.`,
-        409,
-      );
-    }
     throw err;
   }
 
