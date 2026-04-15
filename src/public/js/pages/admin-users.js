@@ -5,6 +5,13 @@ import { renderTableSkeleton } from '../components/skeleton.js';
 import { openModal } from '../components/modal.js';
 import { requireAuth } from '../auth.js';
 
+// helper
+const esc = (s) =>
+  String(s || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
+
 const me = await requireAuth({ allowRoles: ['admin', 'mini-admin'] });
 const myRole = me?.data?.user?.role || me?.user?.role || me?.role;
 
@@ -52,9 +59,9 @@ async function loadUsers() {
       const tr = document.createElement('tr');
       tr.style.opacity = isActive ? '1' : '0.55';
       tr.innerHTML = `
-        <td>${u?.name || '—'}</td>
-        <td class="secondary">${u?.email || '—'}</td>
-        <td><span class="${roleBadge(u?.role)}">${u?.role || '—'}</span></td>
+        <td>${esc(u?.name) || '—'}</td>
+        <td class="secondary">${esc(u?.email) || '—'}</td>
+        <td><span class="${roleBadge(u?.role)}">${esc(u?.role) || '—'}</span></td>
         <td>
           <span class="badge ${isActive ? 'badge-green' : 'badge-muted'}">
             ${isActive ? 'نشط' : 'معطّل'}

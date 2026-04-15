@@ -102,7 +102,11 @@ bookingSchema.pre('save', function () {
 
 // ─── Set autoDeleteAt based on appointmentDate ────────────────
 bookingSchema.pre('save', function () {
-  if (this.isModified('status') || this.isNew) {
+  if (
+    this.isModified('status') ||
+    this.isModified('appointmentDate') ||
+    this.isNew
+  ) {
     const base = this.appointmentDate || new Date();
     this.autoDeleteAt = new Date(base.getTime() + 6 * 30 * 24 * 60 * 60 * 1000);
   }

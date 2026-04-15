@@ -217,9 +217,8 @@ async function load() {
     }
 
     // Notes
-    const notes = p?.notes || '';
-    if (notes && els.pNotes) {
-      els.pNotes.textContent = notes;
+    if (els.pNotes) {
+      els.pNotes.textContent = p?.notes || '—';
     }
 
     // Phone — tap to call
@@ -330,14 +329,14 @@ async function savePayment() {
     showAlert('error', e?.message || 'فشل تحديث الدفع.', { title: 'خطأ' });
   }
 }
-els.total?.addEventListener('blur', () => {
+
+const triggerPaySave = () => {
   clearTimeout(paySaveT);
   paySaveT = setTimeout(savePayment, 400);
-});
-els.deposit?.addEventListener('blur', () => {
-  clearTimeout(paySaveT);
-  paySaveT = setTimeout(savePayment, 400);
-});
+};
+
+els.total?.addEventListener('blur', triggerPaySave);
+els.deposit?.addEventListener('blur', triggerPaySave);
 
 // ── Status change ─────────────────────────────────────────
 async function patchStatus(status) {

@@ -106,10 +106,14 @@ export function initGlobalSearch() {
 
       // ── Empty state ───────────────────────────────────
       if (!html) {
+        const escQ = String(q)
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;');
         html = `<div class="search-empty">
-          <i data-lucide="search-x"></i>
-          لا توجد نتائج لـ "<strong>${q}</strong>"
-        </div>`;
+    <i data-lucide="search-x"></i>
+    لا توجد نتائج لـ "<strong>${escQ}</strong>"
+  </div>`;
       }
 
       show(html);

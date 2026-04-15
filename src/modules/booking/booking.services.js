@@ -3,6 +3,7 @@ import * as patientService from '../patient/patient.services.js';
 import AppError from '../../utils/AppError.js';
 import Patient from '../patient/patientModel.js';
 import { escapeRegex } from '../../utils/utils-functions.js';
+import logger from '../../utils/logger.js';
 /**
  * Create a booking.
  *
@@ -57,22 +58,27 @@ export const createBooking = async (bookingData, employeeId) => {
 
   // Step 2: create booking
   let booking;
-  try {
-    booking = await Booking.create({
-      patient: patient._id,
-      bookedBy: employeeId,
-      appointmentDate,
-      appointmentTime,
-      serviceType,
-      totalPrice,
-      deposit,
-      companion,
-      notes,
-      status: 'pending',
-    });
-  } catch (err) {
-    throw err;
-  }
+  booking = await Booking.create({
+    patient: patient._id,
+    bookedBy: employeeId,
+    appointmentDate,
+    appointmentTime,
+    serviceType,
+    totalPrice,
+    deposit,
+    companion,
+    notes,
+    status: 'pending',
+  });
+
+  logger.info('Booking created', {
+    bookingId: booking._id,
+    patientId: patient._id,
+    patientIsNew: isNew,
+    employeeId,
+    date: appointmentDate,
+    time: appointmentTime,
+  });
 
   // Populate for response
   await booking.populate([

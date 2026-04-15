@@ -1,4 +1,5 @@
 import dotenv from 'dotenv';
+import logger from '../utils/logger.js';
 
 if (process.env.NODE_ENV !== 'production') {
   dotenv.config();
@@ -15,7 +16,7 @@ const requiredEnvVars = [
 
 requiredEnvVars.forEach((key) => {
   if (!process.env[key]) {
-    console.error(`❌ Missing environment variable: ${key}`);
+    logger.error(`❌ Missing environment variable: ${key}`);
     process.exit(1);
   }
 });

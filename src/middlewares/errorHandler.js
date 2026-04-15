@@ -1,4 +1,6 @@
 import AppError from '../utils/AppError.js';
+import { circuitBreaker } from '../config/db.js';
+import logger from '../utils/logger.js';
 
 const handleCastErrorDB = (err) => {
   const message = `Invalid ${err.path}: ${err.value}`;
@@ -68,7 +70,15 @@ const sendErrorProd = (err, req, res) => {
         message: err.message,
       });
     }
-    console.error('💥 ERROR:', err);
+
+    logger.error('Unhandled server error', {
+      message: err.message,
+      stack: err.stack,
+      url: req.originalUrl,
+      method: req.method,
+      ip: req.ip,
+    });
+
     return res.status(500).json({
       status: 'error',
       message: 'Something went wrong!',
@@ -89,7 +99,14 @@ const sendErrorProd = (err, req, res) => {
   }
 
   // Unknown / programming error → generic 500
-  console.error('💥 ERROR:', err);
+  logger.error('Unhandled server error', {
+    message: err.message,
+    stack: err.stack,
+    url: req.originalUrl,
+    method: req.method,
+    ip: req.ip,
+  });
+
   res.status(500).render('pages/errors/500');
 };
 
@@ -97,6 +114,12 @@ const sendErrorProd = (err, req, res) => {
 export default (err, req, res, next) => {
   err.statusCode = err.statusCode || 500;
   err.status = err.status || 'error';
+
+  if (err.name === 'MongoNetworkError' || err.name === 'MongoTimeoutError') {
+    circuitBreaker.recordFailure();
+  } else {
+    circuitBreaker.recordSuccess();
+  }
 
   if (process.env.NODE_ENV === 'development') {
     sendErrorDev(err, req, res);

@@ -11,37 +11,30 @@ const __dirname = path.dirname(__filename);
 
 // const resend = new Resend(process.env.RESEND_API_KEY);
 
+const _transporter = nodemailer.createTransport(
+  process.env.NODE_ENV === 'production'
+    ? {
+        host: process.env.EMAIL_HOST,
+        port: parseInt(process.env.EMAIL_PORT, 10) || 587,
+        secure: process.env.EMAIL_SECURE === 'true',
+        auth: { user: 'apikey', pass: process.env.SENDGRID_API_KEY },
+      }
+    : {
+        host: process.env.EMAIL_DEV_HOST || 'sandbox.smtp.mailtrap.io',
+        port: parseInt(process.env.EMAIL_DEV_PORT, 10) || 587,
+        auth: {
+          user: process.env.EMAIL_DEV_USERNAME,
+          pass: process.env.EMAIL_DEV_PASSWORD,
+        },
+      },
+);
+
 export class EmailServices {
   constructor(user, url) {
     this.to = user.email;
     this.userName = user.name;
     this.url = url;
     this.from = process.env.EMAIL_FROM || 'Clinic-System <noreply@resend.dev>';
-  }
-
-  createTransport() {
-    if (process.env.NODE_ENV === 'production') {
-      // Production: any SMTP provider (SendGrid, Mailgun, AWS SES…)
-      return nodemailer.createTransport({
-        host: process.env.EMAIL_HOST,
-        port: parseInt(process.env.EMAIL_PORT, 10) || 587,
-        secure: process.env.EMAIL_SECURE === 'true', // true = port 465
-        auth: {
-          user: 'apikey',
-          pass: process.env.SENDGRID_API_KEY,
-        },
-      });
-    }
-
-    // Development: Mailtrap (catches all emails, nothing reaches real users)
-    return nodemailer.createTransport({
-      host: process.env.EMAIL_DEV_HOST || 'sandbox.smtp.mailtrap.io',
-      port: parseInt(process.env.EMAIL_DEV_PORT, 10) || 587,
-      auth: {
-        user: process.env.EMAIL_DEV_USERNAME,
-        pass: process.env.EMAIL_DEV_PASSWORD,
-      },
-    });
   }
 
   async sendEmail({ subject, template }) {
@@ -54,8 +47,8 @@ export class EmailServices {
       },
     );
 
-    const transporter = this.createTransport();
-    await transporter.sendMail({
+    await _transporter.sendMail({
+      // ← use _transporter, not this.createTransport()
       from: this.from,
       to: this.to,
       subject,

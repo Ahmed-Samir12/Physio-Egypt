@@ -4,6 +4,7 @@ import User from './user.model.js';
 import RefreshToken from '../token/refreshTokenModel.js';
 import { EmailServices } from '../../utils/emails.js';
 import * as tokenServices from '../token/tokenServices.js';
+import logger from '../../utils/logger.js';
 
 const buildUrl = (path) => {
   return `${process.env.FRONTEND_URL}${path}`;
@@ -139,6 +140,8 @@ export const loginUser = async (userData) => {
   // 2) get the user and check if exist
   const user = await User.findOne({ email }).select('+password');
   if (!user || !(await user.correctPassword(password))) {
+    logger.warn('Failed login attempt', { email });
+
     throw new AppError('Invalid email or password', 400);
   }
 
@@ -150,6 +153,12 @@ export const loginUser = async (userData) => {
 
   if (!user.isEmailVerified)
     throw new AppError('Please verify your email address to login.', 401);
+
+  logger.info('User logged in', {
+    userId: user._id,
+    email: user.email,
+    role: user.role,
+  });
 
   return user;
 };
@@ -187,6 +196,11 @@ export const refresh = async (refreshToken) => {
       // Genuinely suspicious — revoke the whole family
       await tokenServices.revokeTokenFamily(storedToken.familyId);
     }
+
+    logger.warn('Token reuse detected — family revoked', {
+      familyId: storedToken.familyId,
+      userId: storedToken.user,
+    });
 
     throw new AppError('Token reuse detected! Login required.', 403);
   }
