@@ -8,9 +8,12 @@ import cors from 'cors';
 import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import compression from 'compression';
+import timeout from 'connect-timeout';
 
 import AppError from './utils/AppError.js';
 import globalErrorHandler from './middlewares/errorHandler.js';
+import { dbState, circuitBreaker } from './config/db.js';
+import logger from './utils/logger.js';
 
 import authRoutes from './modules/auth/authRoutes.js';
 import patientRoutes from './modules/patient/patient.routes.js';
@@ -20,6 +23,44 @@ import adminRoutes from './modules/admin/admin.routes.js';
 import viewRoutes from './viewRoutes/views.routes.js';
 
 const app = express();
+app.set('trust proxy', 1);
+
+app.use(timeout('30s'));
+app.use((req, res, next) => {
+  if (!req.timedout) next();
+});
+
+app.use((req, res, next) => {
+  if (req.path === '/health') return next();
+
+  if (!dbState.isReady || circuitBreaker.isOpen()) {
+    if (req.originalUrl.startsWith('/api')) {
+      return res.status(503).json({
+        status: 'error',
+        message: 'الخدمة غير متاحة مؤقتاً. يرجى المحاولة بعد لحظات.',
+        retryAfter: 30,
+      });
+    }
+    return res.status(503).render('pages/errors/500');
+  }
+
+  next();
+});
+
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on('finish', () => {
+    const ms = Date.now() - start;
+    if (ms > 2_000) {
+      // log anything over 2 seconds
+      console.warn(
+        `🐢 SLOW REQUEST: ${req.method} ${req.originalUrl} — ${ms}ms`,
+      );
+    }
+  });
+  next();
+});
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
@@ -125,17 +166,40 @@ app.use(express.json({ limit: '10kb' }));
 app.use(express.urlencoded({ extended: true, limit: '10kb' }));
 app.use(cookieParser());
 
-// ── Logging (dev only) ────────────────────────────────────
-if (process.env.NODE_ENV === 'development') app.use(morgan('dev'));
+// ── Logging ────────────────────────────────────
+const morganFormat = process.env.NODE_ENV === 'production' ? 'combined' : 'dev';
+
+app.use(
+  morgan(morganFormat, {
+    stream: {
+      write: (message) => logger.http(message.trim()),
+    },
+
+    skip: (req) => req.originalUrl === '/health',
+  }),
+);
 
 // ── Health check ──────────────────────────────────────────
 app.get('/health', async (req, res) => {
-  try {
-    await mongoose.connection.db.admin().ping();
-    res.json({ status: 'ok', uptime: process.uptime(), db: 'connected' });
-  } catch {
-    res.status(500).json({ status: 'error', db: 'disconnected' });
-  }
+  const dbStatus = mongoose.connection.readyState;
+  // 0=disconnected, 1=connected, 2=connecting, 3=disconnecting
+  const dbLabels = ['disconnected', 'connected', 'connecting', 'disconnecting'];
+
+  const isHealthy = dbStatus === 1;
+
+  res.status(isHealthy ? 200 : 503).json({
+    status: isHealthy ? 'ok' : 'degraded',
+    uptime: Math.floor(process.uptime()),
+    db: {
+      status: dbLabels[dbStatus] || 'unknown',
+      ready: isHealthy,
+    },
+    memory: {
+      used: `${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`,
+      total: `${Math.round(process.memoryUsage().heapTotal / 1024 / 1024)}MB`,
+    },
+    timestamp: new Date().toISOString(),
+  });
 });
 
 // ── Compression ───────────────────────────────────────────

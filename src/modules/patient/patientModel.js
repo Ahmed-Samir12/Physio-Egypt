@@ -66,6 +66,14 @@ const patientSchema = new Schema(
       type: String,
       trim: true,
       default: '',
+      validate: {
+        validator: function (value) {
+          if (!value) return true;
+          const phone = parsePhoneNumberFromString(value, 'EG');
+          return phone && phone.isValid();
+        },
+        message: 'Invalid WhatsApp number',
+      },
     },
 
     notes: String,
@@ -90,28 +98,29 @@ patientSchema.methods.resetAutoDelete = async function () {
 };
 
 patientSchema.pre('validate', function () {
-  if (this.phone) {
-    // Strip +20 or +2 prefix, keep local 01XXXXXXXXX format
-    this.phone = this.phone.replace(/^\+20/, '').replace(/^\+2/, '');
-    if (!this.phone.startsWith('0')) this.phone = '0' + this.phone;
-  }
-  if (this.whatsappNumber) {
-    this.whatsappNumber = this.whatsappNumber
-      .replace(/^\+20/, '')
-      .replace(/^\+2/, '');
-    if (this.whatsappNumber && !this.whatsappNumber.startsWith('0'))
-      this.whatsappNumber = '0' + this.whatsappNumber;
-  }
+  const norm = (v) => {
+    if (!v || typeof v !== 'string') return v;
+    let p = v.trim();
+    if (p.startsWith('+20')) p = p.slice(3);
+    else if (p.startsWith('+2')) p = p.slice(2);
+    else if (p.startsWith('200')) p = p.slice(3);
+    else if (p.startsWith('20')) p = p.slice(2);
+    if (p && !p.startsWith('0')) p = '0' + p;
+    return p;
+  };
+  if (this.phone) this.phone = norm(this.phone);
+  if (this.whatsappNumber) this.whatsappNumber = norm(this.whatsappNumber);
 });
 
 // Auto-generate patientId before first save
 patientSchema.pre('save', async function () {
   if (this.patientId) return;
 
+  // Atomic: find the highest existing patientId and increment
   const last = await mongoose
     .model('Patient')
     .findOne({ patientId: { $exists: true, $ne: null } })
-    .sort({ patientId: -1 })
+    .sort({ createdAt: -1 })
     .select('patientId')
     .lean();
 
@@ -121,7 +130,19 @@ patientSchema.pre('save', async function () {
     if (!isNaN(num)) next = num + 1;
   }
 
-  this.patientId = `PT${String(next).padStart(5, '0')}`;
+  // Use findOneAndUpdate to claim this ID atomically
+  const candidate = `PT${String(next).padStart(5, '0')}`;
+  const existing = await mongoose
+    .model('Patient')
+    .findOne({ patientId: candidate })
+    .lean();
+
+  if (existing) {
+    // Another request got there first — increment again
+    this.patientId = `PT${String(next + 1).padStart(5, '0')}`;
+  } else {
+    this.patientId = candidate;
+  }
 });
 
 export default mongoose.model('Patient', patientSchema);

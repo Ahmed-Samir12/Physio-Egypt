@@ -59,7 +59,7 @@ export const getEmployeeDashboard = async (employeeId, query) => {
     {
       $match: {
         bookedBy: employeeId,
-        status: { status: { $in: ['confirmed', 'done'] } },
+        status: { $in: ['confirmed', 'done'] },
       },
     },
     {

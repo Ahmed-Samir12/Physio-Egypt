@@ -1,6 +1,6 @@
 import { apiFetch, logout } from '../api.js';
 import { showAlert } from '../alert.js';
-import { requireAuth } from '../auth.js';
+import { requireAuth, clearMeCache } from '../auth.js';
 
 const me = await requireAuth();
 const user = me?.data?.user || me?.user || me || {};
@@ -98,6 +98,8 @@ photoInput?.addEventListener('change', async () => {
       }
       return;
     }
+
+    clearMeCache();
 
     const photoUrl = data?.data?.user?.photo;
 
@@ -204,6 +206,8 @@ saveInfoBtn?.addEventListener('click', async () => {
       setMsg(infoSuccess, '✓ تم تحديث الملف الشخصي.', true);
       showAlert('success', 'تم حفظ بياناتك بنجاح.', { title: 'تم التحديث' });
       document.querySelector('[data-profile-name]').textContent = name;
+
+      clearMeCache();
     } else {
       // If endpoint doesn't exist, show info
       setMsg(
@@ -255,6 +259,9 @@ savePwBtn?.addEventListener('click', async () => {
       }),
     });
     const data = await res?.json().catch(() => ({}));
+
+    clearMeCache();
+
     if (res?.ok) {
       setMsg(pwSuccess, '✓ تم تحديث كلمة المرور بنجاح.', true);
       showAlert('success', 'تم تغيير كلمة المرور بنجاح.', {

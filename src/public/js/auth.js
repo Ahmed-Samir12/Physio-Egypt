@@ -114,4 +114,8 @@ function wireGlobalAuthUI(me) {
   if (me) setUserUI(me);
 }
 
-export { requireAuth, wireGlobalAuthUI, getMe, setUserUI };
+function clearMeCache() {
+  _mePromise = null;
+}
+
+export { requireAuth, wireGlobalAuthUI, getMe, setUserUI, clearMeCache };

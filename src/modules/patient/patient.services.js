@@ -60,8 +60,8 @@ export const getAllPatients = async (query) => {
 
   // Only show patients with at least one confirmed booking
   const confirmedPatientIds = await Booking.distinct('patient', {
-    status: 'confirmed',
-  });
+    status: { $in: ['confirmed', 'done'] },
+  }).lean();
 
   const filter = { _id: { $in: confirmedPatientIds } };
 

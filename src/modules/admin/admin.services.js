@@ -31,11 +31,7 @@ export const getAdminDashboard = async (query) => {
 
   const filter = {};
   if (date) {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    const dEnd = new Date(date);
-    dEnd.setHours(23, 59, 59, 999);
-    filter.appointmentDate = { $gte: d, $lte: dEnd };
+    filter.appointmentDate = { $gte: start, $lte: end };
   }
 
   const [
@@ -290,6 +286,6 @@ export const deactivateUser = async (userId) => {
     { new: true },
   );
 
-  if (!user) throw new Error('No user found with that ID.');
+  if (!user) throw new AppError('No user found with that ID.', 404);
   return user;
 };
