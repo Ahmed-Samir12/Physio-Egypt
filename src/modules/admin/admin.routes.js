@@ -16,4 +16,12 @@ router.patch('/users/:id/deactivate', adminController.deactivateUser);
 router.patch('/users/:id/reactivate', adminController.reactivateUser);
 router.get('/employees/:id', adminController.getEmployeeDetail);
 
+router.patch(
+  '/users/:id/role',
+  restrictTo('admin'),
+  adminController.changeUserRole,
+);
+
+router.get('/performance', adminController.getEmployeePerformance);
+
 export default router;

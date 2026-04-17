@@ -189,7 +189,7 @@ export const getAdminDashboard = async (query) => {
  */
 
 export const getEmployeeDetail = async (employeeId, query = {}) => {
-  const { from, to, status, page = 1, limit = 15 } = query;
+  const { from, to, status, page = 1, limit = 10 } = query;
 
   const user = await User.findById(employeeId).select(
     '-password -passwordConfirm',
@@ -228,8 +228,16 @@ export const getEmployeeDetail = async (employeeId, query = {}) => {
     Booking.countDocuments(filter),
   ]);
 
+  const statsMatch = {
+    bookedBy: user._id,
+    status: { $in: ['confirmed', 'done'] },
+    ...(filter.appointmentDate
+      ? { appointmentDate: filter.appointmentDate }
+      : {}),
+  };
+
   const [stats] = await Booking.aggregate([
-    { $match: { bookedBy: user._id, status: 'confirmed' } },
+    { $match: statsMatch },
     {
       $group: {
         _id: null,
@@ -247,6 +255,7 @@ export const getEmployeeDetail = async (employeeId, query = {}) => {
     page: Number(page),
     limit: Number(limit),
     stats: stats || { totalBookings: 0, totalRevenue: 0, totalDeposits: 0 },
+    filters: { from: from || null, to: to || null, status: status || null },
   };
 };
 
@@ -288,4 +297,77 @@ export const deactivateUser = async (userId) => {
 
   if (!user) throw new AppError('No user found with that ID.', 404);
   return user;
+};
+
+/**
+ * Admin: change a user's role.
+ * Only 'admin' can call this — enforced at route level.
+ * Cannot demote/promote yourself.
+ */
+
+export const changeUserRole = async (
+  targetUserId,
+  newRole,
+  requestingUserId,
+) => {
+  const allowedRoles = ['employee', 'mini-admin', 'admin'];
+  if (!allowedRoles.includes(newRole)) {
+    throw new AppError('الصلاحية غير صالحة.', 400);
+  }
+
+  if (String(targetUserId) === String(requestingUserId)) {
+    throw new AppError('لا يمكنك تغيير صلاحيتك الخاصة.', 400);
+  }
+
+  const user = await User.findByIdAndUpdate(
+    targetUserId,
+    { role: newRole },
+    { new: true, runValidators: true },
+  );
+
+  if (!user) throw new AppError('لم يتم العثور على المستخدم.', 404);
+  return user;
+};
+
+/**
+ * Employee performance summary — for mini-admin dashboard.
+ * Same aggregate as admin dashboard but exposed separately.
+ */
+export const getEmployeePerformance = async () => {
+  const results = await Booking.aggregate([
+    { $match: { status: { $ne: 'cancelled' } } },
+    {
+      $group: {
+        _id: '$bookedBy',
+        totalBookings: { $sum: 1 },
+        confirmedBookings: {
+          $sum: { $cond: [{ $in: ['$status', ['confirmed', 'done']] }, 1, 0] },
+        },
+      },
+    },
+    {
+      $lookup: {
+        from: 'users',
+        localField: '_id',
+        foreignField: '_id',
+        as: 'employee',
+      },
+    },
+    { $unwind: '$employee' },
+    {
+      $project: {
+        _id: 0,
+        employeeId: '$_id',
+        name: '$employee.name',
+        email: '$employee.email',
+        role: '$employee.role',
+        isActive: '$employee.isActive',
+        totalBookings: 1,
+        confirmedBookings: 1,
+      },
+    },
+    { $sort: { totalBookings: -1 } },
+  ]);
+
+  return results;
 };

@@ -31,3 +31,22 @@ export const getEmployeeDetail = async (req, res) => {
   const data = await adminService.getEmployeeDetail(req.params.id, req.query);
   res.status(200).json({ status: 'success', data });
 };
+
+export const changeUserRole = async (req, res) => {
+  const user = await adminService.changeUserRole(
+    req.params.id,
+    req.body.role,
+    req.user._id,
+  );
+
+  res.status(200).json({
+    status: 'success',
+    message: `تم تغيير الصلاحية إلى ${user.role}.`,
+    data: { user },
+  });
+};
+
+export const getEmployeePerformance = async (req, res) => {
+  const data = await adminService.getEmployeePerformance();
+  res.status(200).json({ status: 'success', data: { performance: data } });
+};

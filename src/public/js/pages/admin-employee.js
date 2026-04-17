@@ -4,7 +4,7 @@ import { fmtCurrency, fmtDate } from '../utils/format.js';
 import { renderTableSkeleton } from '../components/skeleton.js';
 import { requireAuth } from '../auth.js';
 
-await requireAuth({ allowRoles: ['admin'] });
+await requireAuth({ allowRoles: ['admin', 'mini-admin'] });
 
 const employeeId = window.location.pathname.split('/').pop();
 const $ = (s) => document.querySelector(s);
@@ -31,6 +31,7 @@ function badgeForStatus(s) {
 let _employee = {};
 let _stats = {};
 let _allBookings = [];
+let _filters = {};
 
 async function load() {
   const body = $('[data-emp-bookings-body]');
@@ -60,6 +61,7 @@ async function load() {
     _employee = payload?.employee || {};
     _stats = payload?.stats || {};
     _allBookings = Array.isArray(payload?.bookings) ? payload.bookings : [];
+    _filters = payload?.filters || {};
 
     // Employee info
     const setText = (sel, val) => {
@@ -110,16 +112,13 @@ async function load() {
 
 // ── PDF export ────────────────────────────────────────────────────────────────
 
-function buildEmployeePrintHTML(employee, stats, bookings) {
+function buildEmployeePrintHTML(employee, stats, bookings, filters = {}) {
   const name = employee?.name || '—';
   const email = employee?.email || '—';
   const role = employee?.role || '—';
   const joined = fmtDate(employee?.createdAt);
 
   const totalBookings = stats?.totalBookings || 0;
-  const totalRevenue = stats?.totalRevenue || 0;
-  const totalDeposits = stats?.depositsCollected || stats?.totalDeposits || 0;
-  const totalRemaining = totalRevenue - totalDeposits;
 
   const statusLabelMap = {
     confirmed: 'مؤكد',
@@ -203,7 +202,7 @@ function buildEmployeePrintHTML(employee, stats, bookings) {
     .profile-name{font-size:20px;font-weight:800;color:#0f172a;letter-spacing:-0.03em}
     .profile-email{font-size:13px;color:#7c3aed;font-weight:600;margin-top:3px}
     .badge{font-size:11px;font-weight:700;padding:2px 10px;border-radius:20px;background:#ede9fe;color:#5b21b6;display:inline-block}
-    .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px}
+    .stats-grid{margin-bottom:20px}
     .stat-card{background:#f8faff;border:1px solid #e2e8f0;border-radius:10px;padding:12px 14px;text-align:center}
     .stat-label{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#94a3b8;margin-bottom:4px}
     .stat-value{font-size:18px;font-weight:800;color:#0f172a;letter-spacing:-0.03em}
@@ -213,7 +212,7 @@ function buildEmployeePrintHTML(employee, stats, bookings) {
     table{width:100%;border-collapse:collapse;font-size:11px}
     thead th{background:#7c3aed;color:#fff;font-weight:700;font-size:10px;padding:8px;text-align:right}
     thead th:first-child{border-radius:0 8px 0 0} thead th:last-child{border-radius:8px 0 0 0}
-    tbody td{padding:7px 8px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
+    tbody td{padding:7px 7px;border-bottom:1px solid #f1f5f9;vertical-align:middle}
     tbody tr:last-child td{border-bottom:none}
     tbody tr:nth-child(even) td{background:#f8faff}
     .footer{margin-top:24px;padding-top:12px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;color:#94a3b8;font-size:10px}
@@ -230,9 +229,15 @@ function buildEmployeePrintHTML(employee, stats, bookings) {
           <div class="header-sub">تقرير أداء موظف</div>
         </div>
       </div>
-      <div class="header-right">
+      <div class="header-right" style="text-align:left">
         <div class="header-label">تاريخ الإصدار</div>
         <div class="header-date">${new Date().toLocaleDateString('ar-EG')}</div>
+        ${
+          filters.from || filters.to
+            ? `<div class="header-label" style="margin-top:6px">الفترة</div>
+               <div class="header-date">${filters.from ? new Date(filters.from).toLocaleDateString('ar-EG') : '—'} إلى ${filters.to ? new Date(filters.to).toLocaleDateString('ar-EG') : '—'}</div>`
+            : `<div class="header-date" style="margin-top:4px;color:#94a3b8">جميع الفترات</div>`
+        }
       </div>
     </div>
     <div class="profile">
@@ -248,12 +253,10 @@ function buildEmployeePrintHTML(employee, stats, bookings) {
       </div>
     </div>
     <div class="stats-grid">
+      <div class="stats-grid" style="grid-template-columns:repeat(1,1fr);max-width:200px">
       <div class="stat-card"><div class="stat-label">إجمالي الحجوزات</div><div class="stat-value">${totalBookings}</div></div>
-      <div class="stat-card"><div class="stat-label">إجمالي الإيرادات</div><div class="stat-value green">${fmtCurrency(totalRevenue)}</div></div>
-      <div class="stat-card"><div class="stat-label">إجمالي العربون</div><div class="stat-value green">${fmtCurrency(totalDeposits)}</div></div>
-      <div class="stat-card"><div class="stat-label">إجمالي المتبقي</div><div class="stat-value ${totalRemaining > 0 ? 'red' : 'green'}">${fmtCurrency(totalRemaining)}</div></div>
     </div>
-    <div class="section-title">سجل الحجوزات (${bookings.length})</div>
+    <div class="section-title">سجل الحجوزات (${bookings.length})${filters.from || filters.to ? ` — ${filters.from ? new Date(filters.from).toLocaleDateString('ar-EG') : ''} ${filters.to ? 'إلى ' + new Date(filters.to).toLocaleDateString('ar-EG') : ''}` : ''}</div>
     <table>
       <thead><tr><th>المريض</th><th>الهاتف</th><th>التاريخ</th><th>الوقت</th><th>الخدمة</th><th>الحالة</th><th>الدفع</th><th>الإجمالي</th><th>المتبقي</th></tr></thead>
       <tbody>${bookingRows}</tbody>
@@ -274,7 +277,13 @@ function exportPDF() {
     });
     return;
   }
-  const html = buildEmployeePrintHTML(_employee, _stats, _allBookings);
+  const html = buildEmployeePrintHTML(
+    _employee,
+    _stats,
+    _allBookings,
+    _filters,
+  );
+
   const win = window.open(
     '',
     '_blank',
