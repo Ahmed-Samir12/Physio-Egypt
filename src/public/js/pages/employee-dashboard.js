@@ -205,3 +205,66 @@ dateInput?.addEventListener('keydown', (e) => {
 });
 
 await loadDashboard('');
+
+// ── Employee performance (mini-admin only) ────────────────
+async function loadPerformance() {
+  const perfBody = document.querySelector('[data-perf-body]');
+  if (!perfBody) return; // not on mini-admin dashboard, skip
+
+  renderTableSkeleton(perfBody, 5, 6);
+
+  try {
+    const res = await apiFetch('/admin/performance', { method: 'GET' });
+    if (!res) return;
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) return; // silently skip if not authorized
+
+    const list = json?.data?.performance || [];
+    perfBody.innerHTML = '';
+
+    if (!list.length) {
+      perfBody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="secondary">لا يوجد موظفون</div></div></td></tr>`;
+      return;
+    }
+
+    for (const emp of list) {
+      const id = emp?.employeeId;
+      const roleBadge =
+        emp.role === 'admin'
+          ? 'badge badge-red'
+          : emp.role === 'mini-admin'
+            ? 'badge badge-amber'
+            : 'badge badge-blue';
+      const roleLabel =
+        emp.role === 'admin'
+          ? 'مدير'
+          : emp.role === 'mini-admin'
+            ? 'مدير مساعد'
+            : 'موظف';
+
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td style="font-weight:600">${emp.name || '—'}</td>
+        <td class="secondary" style="font-size:13px">${emp.email || '—'}</td>
+        <td><span class="${roleBadge}">${roleLabel}</span></td>
+        <td class="tnum">${emp.totalBookings ?? 0}</td>
+        <td class="tnum">${emp.confirmedBookings ?? 0}</td>
+        <td>
+          <a class="btn btn-ghost btn-sm" href="/admin/employees/${id}">
+            <i data-lucide="eye"></i> التفاصيل
+          </a>
+        </td>
+      `;
+      perfBody.appendChild(tr);
+    }
+
+    window.lucide?.createIcons?.({ attrs: { 'stroke-width': 1.8 } });
+  } catch {
+    // Non-critical — don't show error, table just stays empty
+  }
+}
+
+// Only run on mini-admin dashboard (page has [data-perf-body])
+if (document.querySelector('[data-perf-body]')) {
+  await loadPerformance();
+}

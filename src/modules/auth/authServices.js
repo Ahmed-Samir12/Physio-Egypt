@@ -7,7 +7,8 @@ import * as tokenServices from '../token/tokenServices.js';
 import logger from '../../utils/logger.js';
 
 const buildUrl = (path) => {
-  return `${process.env.FRONTEND_URL}${path}`;
+  const base = (process.env.FRONTEND_URL || '').replace(/\/+$/, '');
+  return `${base}${path}`;
 };
 
 /**

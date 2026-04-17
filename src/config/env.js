@@ -12,6 +12,9 @@ const requiredEnvVars = [
   'PORT',
   'JWT_ACCESS_TOKEN_SECRET',
   'JWT_ACCESS_TOKEN_EXPIRES_IN',
+  'FRONTEND_URL',
+  'EMAIL_DOMAIN',
+  'RESEND_API_KEY',
 ];
 
 requiredEnvVars.forEach((key) => {
