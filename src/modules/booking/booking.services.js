@@ -101,7 +101,16 @@ export const createBooking = async (bookingData, employeeId) => {
  */
 
 export const getBookings = async (query, user) => {
-  const { date, status, page = 1, limit = 10, search, patientId } = query;
+  const {
+    date,
+    from,
+    to,
+    status,
+    page = 1,
+    limit = 10,
+    search,
+    patientId,
+  } = query;
   const skip = (page - 1) * limit;
 
   const filter = {};
@@ -111,7 +120,20 @@ export const getBookings = async (query, user) => {
     filter.bookedBy = user._id;
   }
 
-  if (date) {
+  if (from || to) {
+    filter.appointmentDate = {};
+    if (from) {
+      const d = new Date(from);
+      d.setHours(0, 0, 0, 0);
+      filter.appointmentDate.$gte = d;
+    }
+    if (to) {
+      const d = new Date(to);
+      d.setHours(23, 59, 59, 999);
+      filter.appointmentDate.$lte = d;
+    }
+  } else if (date) {
+    // backward compat — single date still works
     const d = new Date(date);
     d.setHours(0, 0, 0, 0);
     const dEnd = new Date(date);

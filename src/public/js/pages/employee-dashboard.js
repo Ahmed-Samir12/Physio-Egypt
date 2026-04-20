@@ -66,11 +66,14 @@ function todayStr() {
 }
 
 // ── Main loader ───────────────────────────────────────────
-async function loadDashboard(date) {
+async function loadDashboard(from = '', to = '') {
   const tbody = document.querySelector('[data-appointments-body]');
   if (tbody) renderTableSkeleton(tbody, 6, 7);
 
-  const params = date ? `?date=${date}` : '';
+  const qs = new URLSearchParams();
+  if (from) qs.set('from', from);
+  if (to) qs.set('to', to);
+  const params = qs.toString() ? `?${qs}` : '';
 
   try {
     const res = await apiFetch(`/employee/dashboard${params}`);
@@ -83,25 +86,29 @@ async function loadDashboard(date) {
     const allTime = payload?.allTime || {};
 
     // Update stat labels to reflect selected date if different from today
-    const isToday = !date || date === todayStr();
+    const isToday = !from && !to;
+
     setStat(
       'todayBookings',
-      isToday ? 'حجوزات اليوم' : 'حجوزات اليوم المحدد',
+      isToday ? 'حجوزات اليوم' : 'حجوزات الفترة المحددة',
       today?.bookingsCount ?? 0,
       false,
     );
+
     setStat(
       'todayDeposits',
-      isToday ? 'عربون اليوم' : 'عربون اليوم المحدد',
+      isToday ? 'عربون اليوم' : 'عربون الفترة المحددة',
       today?.depositsCollected ?? 0,
       true,
     );
+
     setStat(
       'allBookings',
       'إجمالي الحجوزات',
       allTime?.totalBookings ?? 0,
       false,
     );
+
     setStat('allRevenue', 'إجمالي الإيرادات', allTime?.totalRevenue ?? 0, true);
 
     // ── Appointments table ──────────────────────────────
@@ -184,27 +191,32 @@ async function loadDashboard(date) {
 }
 
 // ── Date filter controls ──────────────────────────────────
-const dateInput = document.getElementById('dashDateFilter');
+const dateFromInput = document.getElementById('dashDateFrom');
+const dateToInput = document.getElementById('dashDateTo');
 const filterBtn = document.getElementById('dashDateBtn');
 const todayBtn = document.getElementById('dashTodayBtn');
 
-// Set default to today
-if (dateInput) dateInput.value = todayStr();
+// Default: today in both fields
+if (dateFromInput) dateFromInput.value = todayStr();
+if (dateToInput) dateToInput.value = todayStr();
 
 filterBtn?.addEventListener('click', () =>
-  loadDashboard(dateInput?.value || ''),
+  loadDashboard(dateFromInput?.value || '', dateToInput?.value || ''),
 );
+
 todayBtn?.addEventListener('click', () => {
-  if (dateInput) dateInput.value = todayStr();
-  loadDashboard('');
+  if (dateFromInput) dateFromInput.value = todayStr();
+  if (dateToInput) dateToInput.value = todayStr();
+  loadDashboard(todayStr(), todayStr());
 });
 
-// Also load on Enter in date input
-dateInput?.addEventListener('keydown', (e) => {
-  if (e.key === 'Enter') loadDashboard(dateInput.value || '');
-});
+[dateFromInput, dateToInput].forEach((el) =>
+  el?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') filterBtn?.click();
+  }),
+);
 
-await loadDashboard('');
+await loadDashboard(todayStr(), todayStr());
 
 // ── Employee performance (mini-admin only) ────────────────
 async function loadPerformance() {

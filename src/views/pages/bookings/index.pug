@@ -20,9 +20,18 @@ block content
         button.chip(type="button", data-chip="done") مكتمل
         button.chip(type="button", data-chip="cancelled") ملغى
         button.chip(type="button", data-chip="retrieval") مسترد
-      .field(style="min-width:180px; margin-bottom: 20px;")
-        label.label(for="date") التاريخ
-        input#date.input(type="date", data-date, dir="ltr")
+      .date-range-wrap(style="display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap;margin-bottom:20px")
+        .field(style="min-width:140px;margin-bottom:0")
+          label.label(for="date-from") من
+          input#date-from.input(type="date", data-date-from, dir="ltr")
+        .field(style="min-width:140px;margin-bottom:0")
+          label.label(for="date-to") إلى
+          input#date-to.input(type="date", data-date-to, dir="ltr")
+        button.btn.btn-primary.btn-sm(type="button", data-date-search, style="margin-bottom:2px")
+          i(data-lucide="search")
+          | بحث
+        button.btn.btn-ghost.btn-sm(type="button", data-date-clear, style="margin-bottom:2px")
+          | مسح
     .toolbar-right
       a.btn.btn-primary(href="/bookings/new")
         i(data-lucide="plus")

@@ -38,7 +38,9 @@ block content
     .section-head
       h3 المواعيد
       .date-filter-row(style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap")
-        input.input(type="date", id="dashDateFilter", style="width:auto;min-width:150px")
+        input.input(type="date", id="dashDateFrom", style="width:auto;min-width:140px", placeholder="من")
+        span.secondary إلى
+        input.input(type="date", id="dashDateTo", style="width:auto;min-width:140px", placeholder="إلى")
         button.btn.btn-primary.btn-sm(type="button", id="dashDateBtn")
           i(data-lucide="search")
           | عرض
