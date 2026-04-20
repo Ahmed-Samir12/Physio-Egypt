@@ -28,6 +28,7 @@ export const createBooking = async (bookingData, employeeId) => {
     notes: patientNotes,
     complaint,
     whatsappNumber,
+    forceNew,
   } = patientData;
 
   const {
@@ -54,6 +55,7 @@ export const createBooking = async (bookingData, employeeId) => {
       whatsappNumber,
     },
     employeeId,
+    Boolean(forceNew),
   );
 
   // Step 2: create booking

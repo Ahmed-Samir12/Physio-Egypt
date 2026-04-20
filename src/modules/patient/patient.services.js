@@ -7,7 +7,11 @@ import { escapeRegex } from '../../utils/utils-functions.js';
  * Core logic: find existing patient by phone or create a new one.
  * Returns { patient, isNew }.
  */
-export const findOrCreateByPhone = async (patientData, createdBy) => {
+export const findOrCreateByPhone = async (
+  patientData,
+  createdBy,
+  forceNew = false,
+) => {
   const {
     phone,
     name,
@@ -20,8 +24,14 @@ export const findOrCreateByPhone = async (patientData, createdBy) => {
     whatsappNumber,
   } = patientData;
 
-  let patient = await Patient.findOne({ phone });
+  let patient = null;
   let isNew = false;
+
+  // forceNew = true means: skip lookup, always create a brand new patient
+  // Used when a phone number belongs to a family member (e.g. father's number for a child)
+  if (!forceNew) {
+    patient = await Patient.findOne({ phone });
+  }
 
   if (!patient) {
     if (!name) throw new AppError('Name is required for a new patient.', 400);
