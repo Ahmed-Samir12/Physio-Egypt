@@ -5,7 +5,10 @@ import { renderTableSkeleton } from '../components/skeleton.js';
 
 const body = document.querySelector('[data-bookings-body]');
 const searchEl = document.querySelector('[data-bookings-search]');
-const dateEl = document.querySelector('[data-date]');
+const dateFromEl = document.querySelector('[data-date-from]');
+const dateToEl = document.querySelector('[data-date-to]');
+const dateSearchBtn = document.querySelector('[data-date-search]');
+const dateClearBtn = document.querySelector('[data-date-clear]');
 const pageInfo = document.querySelector('[data-page-info]');
 const prevBtn = document.querySelector('[data-prev]');
 const nextBtn = document.querySelector('[data-next]');
@@ -15,7 +18,8 @@ let state = {
   page: 1,
   limit: 10,
   status: 'all',
-  date: '',
+  from: '',
+  to: '',
   search: '',
   total: 0,
 };
@@ -134,7 +138,8 @@ async function fetchBookings() {
       limit: String(state.limit),
     });
     if (state.status !== 'all') qs.set('status', state.status);
-    if (state.date) qs.set('date', state.date);
+    if (state.from) qs.set('from', state.from);
+    if (state.to) qs.set('to', state.to);
     if (state.search.trim()) qs.set('search', state.search.trim());
 
     const res = await apiFetch(`/bookings?${qs}`);
@@ -172,11 +177,27 @@ chips.forEach((c) =>
   }),
 );
 
-dateEl?.addEventListener('change', () => {
-  state.date = dateEl.value || '';
+dateSearchBtn?.addEventListener('click', () => {
+  state.from = dateFromEl?.value || '';
+  state.to = dateToEl?.value || '';
   state.page = 1;
   fetchBookings();
 });
+
+dateClearBtn?.addEventListener('click', () => {
+  if (dateFromEl) dateFromEl.value = '';
+  if (dateToEl) dateToEl.value = '';
+  state.from = '';
+  state.to = '';
+  state.page = 1;
+  fetchBookings();
+});
+
+[dateFromEl, dateToEl].forEach((el) =>
+  el?.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') dateSearchBtn?.click();
+  }),
+);
 
 searchEl?.addEventListener(
   'input',

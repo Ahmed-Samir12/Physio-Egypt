@@ -13,24 +13,26 @@ import { todayRange } from '../../utils/utils-functions.js';
  */
 
 export const getAdminDashboard = async (query) => {
-  const { date, page = 1, limit = 10 } = query;
+  const { date, from, to, page = 1, limit = 10 } = query;
   const skip = (page - 1) * limit;
 
-  // If a date is passed use it, otherwise default to today
   let start, end;
-  if (date) {
-    const d = new Date(date);
-    d.setHours(0, 0, 0, 0);
-    const dEnd = new Date(date);
-    dEnd.setHours(23, 59, 59, 999);
-    start = d;
-    end = dEnd;
+  if (from || to) {
+    start = from ? new Date(from) : new Date('2000-01-01');
+    start.setHours(0, 0, 0, 0);
+    end = to ? new Date(to) : new Date();
+    end.setHours(23, 59, 59, 999);
+  } else if (date) {
+    start = new Date(date);
+    start.setHours(0, 0, 0, 0);
+    end = new Date(date);
+    end.setHours(23, 59, 59, 999);
   } else {
     ({ start, end } = todayRange());
   }
 
   const filter = {};
-  if (date) {
+  if (from || to || date) {
     filter.appointmentDate = { $gte: start, $lte: end };
   }
 
@@ -161,6 +163,8 @@ export const getAdminDashboard = async (query) => {
 
   return {
     selectedDate: date || null,
+    selectedFrom: from || null,
+    selectedTo: to || null,
     today: todayStats || {
       totalBookings: 0,
       totalDepositsCollected: 0,

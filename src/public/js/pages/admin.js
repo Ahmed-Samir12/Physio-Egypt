@@ -143,14 +143,17 @@ function wireStatusFilter() {
   );
 }
 
-async function loadAdminDashboard(date = null) {
+async function loadAdminDashboard(from = null, to = null) {
   const perfBody = document.querySelector('[data-perf-body]');
   const bookingsBody = document.querySelector('[data-bookings-body]');
   if (perfBody) renderTableSkeleton(perfBody, 5, 6);
   if (bookingsBody) renderTableSkeleton(bookingsBody, 6, 7);
 
   try {
-    const url = date ? `/admin/dashboard?date=${date}` : '/admin/dashboard';
+    const qs = new URLSearchParams();
+    if (from) qs.set('from', from);
+    if (to) qs.set('to', to);
+    const url = qs.toString() ? `/admin/dashboard?${qs}` : '/admin/dashboard';
 
     const res = await apiFetch(url, { method: 'GET' });
     if (!res) return;
@@ -162,14 +165,12 @@ async function loadAdminDashboard(date = null) {
     const allTime = payload?.allTime || {};
 
     // Update card labels if a specific date was selected
-    const selectedDate = payload?.selectedDate;
-    const dateLabel = selectedDate
-      ? new Date(selectedDate).toLocaleDateString('ar-EG', {
-          day: 'numeric',
-          month: 'long',
-          year: 'numeric',
-        })
-      : null;
+    const selectedFrom = payload?.selectedFrom;
+    const selectedTo = payload?.selectedTo;
+    const dateLabel =
+      selectedFrom || selectedTo
+        ? `${selectedFrom ? new Date(selectedFrom).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short' }) : '…'} — ${selectedTo ? new Date(selectedTo).toLocaleDateString('ar-EG', { day: 'numeric', month: 'short', year: 'numeric' }) : '…'}`
+        : null;
 
     const todayBookingsLabel = document.querySelector(
       '[data-stat-label="todayBookings"]',
@@ -306,23 +307,26 @@ function setText(sel, val) {
 
 // ── Date filter ──────────────────────────────────────────
 function injectDateFilter() {
-  const picker = document.getElementById('dashDatePicker');
+  const fromInput = document.getElementById('dashDateFrom');
+  const toInput = document.getElementById('dashDateTo');
+  const searchBtn = document.getElementById('dashDateSearch');
   const resetBtn = document.getElementById('dashDateReset');
-  if (!picker || !resetBtn) return;
 
-  picker.addEventListener('change', () => {
-    const val = picker.value;
-    if (val) {
-      resetBtn.style.display = '';
-      loadAdminDashboard(val);
-    }
+  searchBtn?.addEventListener('click', () => {
+    loadAdminDashboard(fromInput?.value || null, toInput?.value || null);
   });
 
-  resetBtn.addEventListener('click', () => {
-    picker.value = '';
-    resetBtn.style.display = 'none';
-    loadAdminDashboard(null);
+  resetBtn?.addEventListener('click', () => {
+    if (fromInput) fromInput.value = '';
+    if (toInput) toInput.value = '';
+    loadAdminDashboard(null, null);
   });
+
+  [fromInput, toInput].forEach((el) =>
+    el?.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') searchBtn?.click();
+    }),
+  );
 }
 
 injectDateFilter();

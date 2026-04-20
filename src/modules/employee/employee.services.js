@@ -8,14 +8,22 @@ import Booking from '../booking/booking.model.js';
  */
 
 export const getEmployeeDashboard = async (employeeId, query) => {
-  const { date, page = 1, limit = 10 } = query;
+  const { date, from, to, page = 1, limit = 10 } = query;
 
-  // Build date filter (default: today)
-  const targetDate = date ? new Date(date) : new Date();
-  const start = new Date(targetDate);
-  start.setHours(0, 0, 0, 0);
-  const end = new Date(targetDate);
-  end.setHours(23, 59, 59, 999);
+  // Build date range — from/to takes priority, then single date, then today
+  let start, end;
+  if (from || to) {
+    start = from ? new Date(from) : new Date('2000-01-01');
+    start.setHours(0, 0, 0, 0);
+    end = to ? new Date(to) : new Date();
+    end.setHours(23, 59, 59, 999);
+  } else {
+    const targetDate = date ? new Date(date) : new Date();
+    start = new Date(targetDate);
+    start.setHours(0, 0, 0, 0);
+    end = new Date(targetDate);
+    end.setHours(23, 59, 59, 999);
+  }
 
   const skip = (page - 1) * limit;
 
@@ -74,7 +82,8 @@ export const getEmployeeDashboard = async (employeeId, query) => {
 
   return {
     today: {
-      date: targetDate.toDateString(),
+      from: start.toISOString(),
+      to: end.toISOString(),
       bookingsCount: todayStats?.count || 0,
       depositsCollected: todayStats?.depositsCollected || 0,
     },
