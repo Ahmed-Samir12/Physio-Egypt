@@ -13,6 +13,8 @@ const companionEl = document.querySelector('[data-companion]');
 const complaintEl = document.querySelector('[data-complaint]');
 const whatsappNumEl = document.querySelector('[data-whatsapp-number]');
 const pnotesEl = document.querySelector('[data-pnotes]');
+const forceNewBtn = document.querySelector('[data-force-new]');
+const forceNewFlag = document.querySelector('[data-force-new-flag]');
 const genderWrap = document.querySelector('[data-gender]');
 const patientIdEl = document.querySelector('[data-patient-id]');
 
@@ -54,6 +56,7 @@ function getFullPhone() {
 
 function setFound(isFound) {
   foundEl?.classList.toggle('hidden', !isFound);
+  forceNewBtn?.classList.toggle('hidden', !isFound);
 }
 
 function pillSync() {
@@ -128,7 +131,36 @@ const tryFindPatient = debounce(async () => {
 }, 500);
 
 phoneEl?.addEventListener('blur', () => tryFindPatient());
-phoneEl?.addEventListener('input', () => setFound(false));
+phoneEl?.addEventListener('input', () => {
+  setFound(false);
+  // Reset force-new whenever the phone changes
+  if (forceNewFlag) forceNewFlag.value = '0';
+  forceNewBtn?.classList.add('hidden');
+});
+
+// Force-new: clear form and mark as new patient
+forceNewBtn?.addEventListener('click', () => {
+  // Clear all patient fields
+  if (nameEl) nameEl.value = '';
+  if (ageEl) ageEl.value = '';
+  if (addressEl) addressEl.value = '';
+  if (nationalityEl) nationalityEl.value = '';
+  if (complaintEl) complaintEl.value = '';
+  if (whatsappNumEl) whatsappNumEl.value = '';
+  if (pnotesEl) pnotesEl.value = '';
+  // Clear gender
+  genderWrap
+    ?.querySelectorAll('input[name="gender"]')
+    .forEach((r) => (r.checked = false));
+  pillSync();
+  // Hide found badge and this button
+  setFound(false);
+  forceNewBtn?.classList.add('hidden');
+  // Set the flag
+  if (forceNewFlag) forceNewFlag.value = '1';
+  // Focus name field so employee can type the child's name immediately
+  nameEl?.focus();
+});
 
 // ── Submit ────────────────────────────────────────────────
 form?.addEventListener('submit', async (e) => {
@@ -149,6 +181,7 @@ form?.addEventListener('submit', async (e) => {
         complaint: complaintEl?.value?.trim() || '',
         whatsappNumber: whatsappNumEl?.value?.trim() || '',
         notes: pnotesEl?.value?.trim() || '',
+        forceNew: forceNewFlag?.value === '1',
       },
       booking: {
         appointmentDate: dateEl?.value || '',
