@@ -46,6 +46,10 @@ const userSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    isApproved: {
+      type: Boolean,
+      default: false, // Admin must approve new registrations
+    },
     passwordChangedAt: Date,
     passwordResetToken: String,
 

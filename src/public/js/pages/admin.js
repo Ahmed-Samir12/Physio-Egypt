@@ -191,7 +191,7 @@ async function loadAdminDashboard(from = null, to = null) {
     const statsData = {
       todayBookings: today?.totalBookings ?? 0,
       todayDeposits: today?.totalDepositsCollected ?? 0,
-      allBookings: payload?.totalBookings ?? 0,
+      allBookings: allTime?.totalBookings ?? 0,
       allRevenue: allTime?.totalRevenue ?? today?.totalRevenue ?? 0,
     };
 

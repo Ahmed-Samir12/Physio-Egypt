@@ -36,6 +36,10 @@ export const getAdminDashboard = async (query) => {
     filter.appointmentDate = { $gte: start, $lte: end };
   }
 
+  // Build the date match condition once — reused across all aggregates
+  const dateMatch =
+    from || to || date ? { appointmentDate: { $gte: start, $lte: end } } : null;
+
   const [
     [todayStats],
     [allTimeStats],
@@ -45,12 +49,14 @@ export const getAdminDashboard = async (query) => {
     statusBreakdown,
     bookings,
     totalBookings,
+    allTimeTotal,
   ] = await Promise.all([
-    // 1. TODAY — deposits + bookings created today from money-received statuses
+    // 1. PERIOD STATS — bookings in the selected range (confirmed + done + retrieval)
+    //    Uses appointmentDate when a filter is active; falls back to createdAt for "today".
     Booking.aggregate([
       {
         $match: {
-          createdAt: { $gte: start, $lte: end },
+          ...(dateMatch ?? { createdAt: { $gte: start, $lte: end } }),
           status: { $in: ['confirmed', 'done', 'retrieval'] },
         },
       },
@@ -65,9 +71,14 @@ export const getAdminDashboard = async (query) => {
       },
     ]),
 
-    // 2. ALL-TIME REVENUE — only confirmed + done (actual earned revenue)
+    // 2. REVENUE — confirmed + done, scoped to date filter when active
     Booking.aggregate([
-      { $match: { status: { $in: ['confirmed', 'done'] } } },
+      {
+        $match: {
+          ...(dateMatch ?? {}),
+          status: { $in: ['confirmed', 'done'] },
+        },
+      },
       {
         $group: {
           _id: null,
@@ -77,9 +88,14 @@ export const getAdminDashboard = async (query) => {
       },
     ]),
 
-    // 3. ALL-TIME DEPOSITS — confirmed + done + retrieval (all statuses you got deposit from)
+    // 3. DEPOSITS — confirmed + done + retrieval, scoped to date filter when active
     Booking.aggregate([
-      { $match: { status: { $in: ['confirmed', 'done', 'retrieval'] } } },
+      {
+        $match: {
+          ...(dateMatch ?? {}),
+          status: { $in: ['confirmed', 'done', 'retrieval'] },
+        },
+      },
       {
         $group: {
           _id: null,
@@ -88,9 +104,14 @@ export const getAdminDashboard = async (query) => {
       },
     ]),
 
-    // 4. RETRIEVAL — for discount calculation
+    // 4. RETRIEVAL DISCOUNT — scoped to date filter when active
     Booking.aggregate([
-      { $match: { status: 'retrieval' } },
+      {
+        $match: {
+          ...(dateMatch ?? {}),
+          status: 'retrieval',
+        },
+      },
       {
         $group: {
           _id: null,
@@ -100,9 +121,14 @@ export const getAdminDashboard = async (query) => {
       },
     ]),
 
-    // 5. EMPLOYEE PERFORMANCE
+    // 5. EMPLOYEE PERFORMANCE — confirmed + done, scoped to date filter when active
     Booking.aggregate([
-      { $match: { status: { $ne: 'cancelled' } } },
+      {
+        $match: {
+          ...(dateMatch ?? {}),
+          status: { $in: ['confirmed', 'done'] },
+        },
+      },
       {
         $group: {
           _id: '$bookedBy',
@@ -134,8 +160,11 @@ export const getAdminDashboard = async (query) => {
       { $sort: { totalBookings: -1 } },
     ]),
 
-    // 6. STATUS BREAKDOWN
+    // 6. STATUS BREAKDOWN — scoped to date filter when active
     Booking.aggregate([
+      {
+        $match: dateMatch ?? {},
+      },
       {
         $group: {
           _id: '$status',
@@ -144,7 +173,7 @@ export const getAdminDashboard = async (query) => {
       },
     ]),
 
-    // 7. BOOKINGS LIST (paginated)
+    // 7. BOOKINGS LIST (paginated, respects date filter)
     Booking.find(filter)
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -152,8 +181,11 @@ export const getAdminDashboard = async (query) => {
       .populate('patient', 'name phone nationality')
       .populate('bookedBy', 'name'),
 
-    // 8. TOTAL BOOKINGS COUNT (all ever, no filter)
+    // 8. TOTAL BOOKINGS COUNT for selected date filter (for pagination)
     Booking.countDocuments(filter),
+
+    // 9. ALL-TIME total bookings (non-cancelled) — always unfiltered for the stat card
+    Booking.countDocuments({ status: { $ne: 'cancelled' } }),
   ]);
 
   const totalRevenue = allTimeStats?.totalRevenue || 0;
@@ -172,7 +204,7 @@ export const getAdminDashboard = async (query) => {
       totalRemaining: 0,
     },
     allTime: {
-      totalBookings: allTimeStats?.totalBookings || 0,
+      totalBookings: allTimeTotal || 0, // all-time non-cancelled (for stat card)
       totalRevenue: allTimeStats?.totalRevenue || 0,
       totalDeposits: allDepositsStats?.totalDeposits || 0, // from separate aggregate
     },
@@ -267,12 +299,40 @@ export const getEmployeeDetail = async (employeeId, query = {}) => {
  * Admin user management: list all users.
  */
 
-export const getAllUsers = async ({ all = false } = {}) => {
-  const filter = all ? {} : { isActive: true };
+export const getAllUsers = async ({ all = false, pending = false } = {}) => {
+  let filter = {};
+  if (pending) {
+    // Show only unapproved accounts waiting for review
+    filter = { isApproved: false };
+  } else if (!all) {
+    filter = { isActive: true, isApproved: true };
+  }
   const users = await User.find(filter)
     .select('-__v')
-    .sort({ isActive: -1, createdAt: -1 });
+    .sort({ isApproved: 1, isActive: -1, createdAt: -1 });
   return users;
+};
+
+/**
+ * Admin: approve a pending user registration.
+ */
+export const approveUser = async (userId) => {
+  const user = await User.findByIdAndUpdate(
+    userId,
+    { isApproved: true, isActive: true },
+    { new: true },
+  );
+  if (!user) throw new AppError('No user found with that ID.', 404);
+  return user;
+};
+
+/**
+ * Admin: reject and delete a pending user registration.
+ */
+export const rejectUser = async (userId) => {
+  const user = await User.findOneAndDelete({ _id: userId, isApproved: false });
+  if (!user) throw new AppError('No pending user found with that ID.', 404);
+  return user;
 };
 
 /**
@@ -300,6 +360,24 @@ export const deactivateUser = async (userId) => {
   );
 
   if (!user) throw new AppError('No user found with that ID.', 404);
+  return user;
+};
+
+/**
+ * Admin: permanently delete a user and all their bookings.
+ * Cannot delete yourself.
+ */
+export const deleteUser = async (userId, requestingUserId) => {
+  if (String(userId) === String(requestingUserId)) {
+    throw new AppError('لا يمكنك حذف حسابك الخاص.', 400);
+  }
+
+  const user = await User.findByIdAndDelete(userId);
+  if (!user) throw new AppError('لم يتم العثور على المستخدم.', 404);
+
+  // Remove all bookings created by this user
+  await Booking.deleteMany({ bookedBy: userId });
+
   return user;
 };
 

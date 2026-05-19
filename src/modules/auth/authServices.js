@@ -155,6 +155,12 @@ export const loginUser = async (userData) => {
   if (!user.isEmailVerified)
     throw new AppError('Please verify your email address to login.', 401);
 
+  if (!user.isApproved)
+    throw new AppError(
+      'حسابك قيد المراجعة. يرجى الانتظار حتى يقوم المسؤول بتفعيل حسابك.',
+      401,
+    );
+
   logger.info('User logged in', {
     userId: user._id,
     email: user.email,

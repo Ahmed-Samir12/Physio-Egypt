@@ -7,10 +7,33 @@ export const getDashboard = async (req, res) => {
 
 export const getAllUsers = async (req, res) => {
   const all = req.query.all === '1';
-  const users = await adminService.getAllUsers({ all });
+  const pending = req.query.pending === '1';
+  const users = await adminService.getAllUsers({ all, pending });
   res
     .status(200)
     .json({ status: 'success', results: users.length, data: { users } });
+};
+
+export const approveUser = async (req, res) => {
+  const user = await adminService.approveUser(req.params.id);
+  res.status(200).json({
+    status: 'success',
+    message: 'تم تفعيل حساب المستخدم.',
+    data: { user },
+  });
+};
+
+export const rejectUser = async (req, res) => {
+  await adminService.rejectUser(req.params.id);
+  res.status(200).json({ status: 'success', message: 'تم رفض وحذف الحساب.' });
+};
+
+export const deleteUser = async (req, res) => {
+  await adminService.deleteUser(req.params.id, req.user._id);
+  res.status(200).json({
+    status: 'success',
+    message: 'تم حذف المستخدم وجميع حجوزاته نهائياً.',
+  });
 };
 
 export const deactivateUser = async (req, res) => {
