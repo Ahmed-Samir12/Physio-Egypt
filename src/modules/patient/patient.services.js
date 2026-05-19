@@ -34,7 +34,7 @@ export const findOrCreateByPhone = async (
   }
 
   if (!patient) {
-    if (!name) throw new AppError('Name is required for a new patient.', 400);
+    if (!name) throw new AppError('اسم المريض مطلوب.', 400);
     patient = await Patient.create({
       phone,
       name,
@@ -101,7 +101,7 @@ export const getAllPatients = async (query) => {
  */
 export const getPatientById = async (id) => {
   const patient = await Patient.findById(id);
-  if (!patient) throw new AppError('No patient found with that ID.', 404);
+  if (!patient) throw new AppError('لم يتم العثور على المريض.', 404);
   return patient;
 };
 
@@ -114,7 +114,7 @@ export const updatePatient = async (id, data) => {
     new: true,
     runValidators: true,
   });
-  if (!patient) throw new AppError('No patient found with that ID.', 404);
+  if (!patient) throw new AppError('لم يتم العثور على المريض.', 404);
   return patient;
 };
 
@@ -123,6 +123,6 @@ export const updatePatient = async (id, data) => {
  */
 export const deletePatient = async (id) => {
   const patient = await Patient.findByIdAndDelete(id);
-  if (!patient) throw new AppError('No patient found with that ID.', 404);
+  if (!patient) throw new AppError('لم يتم العثور على المريض.', 404);
   return patient;
 };

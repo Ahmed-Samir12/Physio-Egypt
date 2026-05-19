@@ -191,13 +191,13 @@ export const getBookingById = async (id, user) => {
     )
     .populate('bookedBy', 'name email');
 
-  if (!booking) throw new AppError('No booking found with that ID.', 404);
+  if (!booking) throw new AppError('لم يتم العثور على الحجز.', 404);
 
   if (
     user.role === 'employee' &&
     booking.bookedBy._id.toString() !== user._id.toString()
   ) {
-    throw new AppError('You do not have permission to view this booking.', 403);
+    throw new AppError('ليس لديك إذن لعرض هذا الحجز.', 403);
   }
 
   return booking;
@@ -209,16 +209,13 @@ export const getBookingById = async (id, user) => {
 
 export const updateBooking = async (id, data, user) => {
   const booking = await Booking.findById(id);
-  if (!booking) throw new AppError('No booking found with that ID.', 404);
+  if (!booking) throw new AppError('لم يتم العثور على الحجز.', 404);
 
   if (
     user.role === 'employee' &&
     booking.bookedBy.toString() !== user._id.toString()
   ) {
-    throw new AppError(
-      'You do not have permission to update this booking.',
-      403,
-    );
+    throw new AppError('ليس لديك إذن لتحديث هذا الحجز.', 403);
   }
 
   // Allow updating these fields
@@ -262,16 +259,13 @@ export const updateBooking = async (id, data, user) => {
 
 export const cancelBooking = async (id, user) => {
   const booking = await Booking.findById(id);
-  if (!booking) throw new AppError('No booking found with that ID.', 404);
+  if (!booking) throw new AppError('لم يتم العثور على الحجز.', 404);
 
   if (
     user.role === 'employee' &&
     booking.bookedBy.toString() !== user._id.toString()
   ) {
-    throw new AppError(
-      'You do not have permission to cancel this booking.',
-      403,
-    );
+    throw new AppError('ليس لديك إذن لألغاء هذا الحجز.', 403);
   }
 
   booking.status = 'cancelled';

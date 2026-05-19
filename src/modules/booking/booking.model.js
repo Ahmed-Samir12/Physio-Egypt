@@ -107,6 +107,8 @@ bookingSchema.pre('save', function () {
     this.isModified('appointmentDate') ||
     this.isNew
   ) {
+    if (this.status === 'cancelled') return;
+
     const base = this.appointmentDate || new Date();
     this.autoDeleteAt = new Date(base.getTime() + 6 * 30 * 24 * 60 * 60 * 1000);
   }

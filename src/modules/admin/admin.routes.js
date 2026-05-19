@@ -14,6 +14,17 @@ router.use(restrictTo('mini-admin', 'admin'));
 router.get('/users', adminController.getAllUsers);
 router.patch('/users/:id/deactivate', adminController.deactivateUser);
 router.patch('/users/:id/reactivate', adminController.reactivateUser);
+router.patch(
+  '/users/:id/approve',
+  restrictTo('admin'),
+  adminController.approveUser,
+);
+router.delete(
+  '/users/:id/reject',
+  restrictTo('admin'),
+  adminController.rejectUser,
+);
+router.delete('/users/:id', restrictTo('admin'), adminController.deleteUser);
 router.get('/employees/:id', adminController.getEmployeeDetail);
 
 router.patch(

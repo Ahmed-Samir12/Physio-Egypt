@@ -5,6 +5,23 @@ block vars
   - var pageCrumb = 'لوحة الإدارة'
 
 block content
+
+  //- ── Pending approvals ───────────────────────────────────
+  .card.card-pad.card-glass.reveal(style="margin-bottom:1.5rem" data-pending-section)
+    .section-head(style="margin-bottom:1rem")
+      h3 طلبات التسجيل المعلقة
+      .secondary بانتظار موافقة المسؤول
+    .table-wrap
+      table.table
+        thead
+          tr
+            th الاسم
+            th البريد الإلكتروني
+            th تاريخ التسجيل
+            th(colspan="2") الإجراءات
+        tbody(data-pending-body)
+
+  //- ── Active users ────────────────────────────────────────
   .card.card-pad.card-glass.reveal
     .section-head(style="margin-bottom:1rem")
       h3 المستخدمون

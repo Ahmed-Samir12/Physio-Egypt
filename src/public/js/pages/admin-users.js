@@ -17,6 +17,8 @@ const myRole = me?.data?.user?.role || me?.user?.role || me?.role;
 const myId = me?.data?.user?._id || me?.data?.user?.id || me?.user?._id;
 
 const body = document.querySelector('[data-users-body]');
+const pendingBody = document.querySelector('[data-pending-body]');
+const pendingSection = document.querySelector('[data-pending-section]');
 
 function roleBadge(role) {
   if (role === 'admin') return 'badge badge-red';
@@ -32,6 +34,53 @@ function roleLabel(role) {
   return role || '—';
 }
 
+// ── Load pending (unapproved) registrations ───────────────
+async function loadPendingUsers() {
+  if (!pendingBody) return;
+  renderTableSkeleton(pendingBody, 3, 5);
+
+  try {
+    const res = await apiFetch('/admin/users?pending=1', { method: 'GET' });
+    if (!res) return;
+    const json = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(json?.message || 'فشل تحميل الطلبات المعلقة');
+
+    const users = json?.data?.users || [];
+    pendingBody.innerHTML = '';
+
+    if (!users.length) {
+      if (pendingSection) pendingSection.style.display = 'none';
+      return;
+    }
+
+    if (pendingSection) pendingSection.style.display = '';
+
+    users.forEach((u) => {
+      const id = u?._id || u?.id;
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td><strong>${esc(u?.name) || '—'}</strong></td>
+        <td class="secondary">${esc(u?.email) || '—'}</td>
+        <td>${fmtDate(u?.createdAt)}</td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="btn btn-success btn-sm" type="button" data-approve="${id}">
+            <i data-lucide="user-check"></i> قبول
+          </button>
+          <button class="btn btn-danger btn-sm" type="button" data-reject="${id}">
+            <i data-lucide="user-x"></i> رفض
+          </button>
+        </td>
+      `;
+      pendingBody.appendChild(tr);
+    });
+
+    window.lucide?.createIcons?.({ attrs: { 'stroke-width': 1.8 } });
+  } catch (e) {
+    showAlert('error', e?.message || 'فشل تحميل الطلبات المعلقة');
+  }
+}
+
+// ── Load approved/active users ────────────────────────────
 async function loadUsers() {
   if (body) renderTableSkeleton(body, 6, 7);
   try {
@@ -40,7 +89,10 @@ async function loadUsers() {
     const json = await res.json().catch(() => ({}));
     if (!res.ok) throw new Error(json?.message || 'فشل تحميل المستخدمين');
 
-    const users = json?.data?.users || [];
+    // Filter out unapproved accounts — they show in the pending section
+    const users = (json?.data?.users || []).filter(
+      (u) => u?.isApproved !== false,
+    );
     const list = Array.isArray(users) ? users : [];
 
     if (!body) return;
@@ -73,6 +125,14 @@ async function loadUsers() {
              </button>`
           : '';
 
+      // Delete button — admin only, not for self
+      const deleteBtn =
+        myRole === 'admin' && !isSelf
+          ? `<button class="btn btn-danger btn-sm" type="button" data-delete-user="${id}" data-user-name="${esc(u?.name)}" title="حذف نهائي">
+               <i data-lucide="trash-2"></i> حذف
+             </button>`
+          : '';
+
       const tr = document.createElement('tr');
       tr.style.opacity = isActive ? '1' : '0.55';
       tr.innerHTML = `
@@ -85,7 +145,7 @@ async function loadUsers() {
           </span>
         </td>
         <td>${fmtDate(u?.createdAt)}</td>
-        <td style="display:flex;gap:6px;flex-wrap:wrap">${toggleBtn}${roleBtn}</td>
+        <td style="display:flex;gap:6px;flex-wrap:wrap">${toggleBtn}${roleBtn}${deleteBtn}</td>
       `;
       body.appendChild(tr);
     });
@@ -97,6 +157,79 @@ async function loadUsers() {
 }
 
 document.addEventListener('click', (e) => {
+  // ── Approve ─────────────────────────────────────────────
+  const approveBtn = e.target?.closest?.('[data-approve]');
+  if (approveBtn) {
+    const id = approveBtn.getAttribute('data-approve');
+    openModal({
+      title: 'قبول طلب التسجيل؟',
+      body: 'سيتمكن هذا المستخدم من تسجيل الدخول فور التأكيد.',
+      confirmText: 'قبول',
+      onConfirm: async () => {
+        const res = await apiFetch(
+          `/admin/users/${encodeURIComponent(id)}/approve`,
+          { method: 'PATCH' },
+        );
+        if (!res) return;
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json?.message || 'فشل قبول الطلب');
+        showAlert('success', 'تم قبول الحساب وتفعيله.', { title: 'تم' });
+        await Promise.all([loadPendingUsers(), loadUsers()]);
+      },
+    });
+    return;
+  }
+
+  // ── Reject ──────────────────────────────────────────────
+  const rejectBtn = e.target?.closest?.('[data-reject]');
+  if (rejectBtn) {
+    const id = rejectBtn.getAttribute('data-reject');
+    openModal({
+      title: 'رفض طلب التسجيل؟',
+      body: 'سيتم حذف هذا الحساب نهائياً ولن يتمكن المستخدم من الدخول.',
+      confirmText: 'رفض وحذف',
+      danger: true,
+      onConfirm: async () => {
+        const res = await apiFetch(
+          `/admin/users/${encodeURIComponent(id)}/reject`,
+          { method: 'DELETE' },
+        );
+        if (!res) return;
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json?.message || 'فشل رفض الطلب');
+        showAlert('warning', 'تم رفض وحذف الحساب.', { title: 'تم' });
+        await loadPendingUsers();
+      },
+    });
+    return;
+  }
+
+  // ── Delete user (permanent) — admin only ────────────────
+  const deleteUserBtn = e.target?.closest?.('[data-delete-user]');
+  if (deleteUserBtn) {
+    const id = deleteUserBtn.getAttribute('data-delete-user');
+    const name = deleteUserBtn.getAttribute('data-user-name') || 'هذا المستخدم';
+    openModal({
+      title: 'حذف المستخدم نهائياً؟',
+      body: `سيتم حذف حساب "${name}" وجميع حجوزاته بشكل نهائي ولا يمكن التراجع عن هذا الإجراء.`,
+      confirmText: 'حذف نهائي',
+      danger: true,
+      onConfirm: async () => {
+        const res = await apiFetch(`/admin/users/${encodeURIComponent(id)}`, {
+          method: 'DELETE',
+        });
+        if (!res) return;
+        const json = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(json?.message || 'فشل حذف المستخدم');
+        showAlert('warning', `تم حذف حساب "${name}" نهائياً.`, {
+          title: 'تم الحذف',
+        });
+        await loadUsers();
+      },
+    });
+    return;
+  }
+
   // ── Deactivate ──────────────────────────────────────────
   const deactivateBtn = e.target?.closest?.('[data-deactivate]');
   if (deactivateBtn) {
@@ -152,7 +285,6 @@ document.addEventListener('click', (e) => {
     const id = roleBtn.getAttribute('data-change-role');
     const currentRole = roleBtn.getAttribute('data-current-role');
 
-    // Build a DOM node so we can get the select value in onConfirm
     const container = document.createElement('div');
     container.style.cssText = 'display:flex;flex-direction:column;gap:12px';
 
@@ -184,7 +316,7 @@ document.addEventListener('click', (e) => {
       confirmText: 'تأكيد التغيير',
       onConfirm: async () => {
         const newRole = select.value;
-        if (newRole === currentRole) return; // nothing changed
+        if (newRole === currentRole) return;
 
         const res = await apiFetch(
           `/admin/users/${encodeURIComponent(id)}/role`,
@@ -205,4 +337,5 @@ document.addEventListener('click', (e) => {
   }
 });
 
+await loadPendingUsers();
 await loadUsers();
